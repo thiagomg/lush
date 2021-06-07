@@ -27,4 +27,4 @@ Why not (whatever other language)?
 
 ## Documentation
 
-None for now. I will post examples as I manage to have more time for that
+None for now. I will post examples as soon as possible
