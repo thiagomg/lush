@@ -31,3 +31,5 @@ cp src/lua  $PROJECT_DIR/bin/
 cp src/luac $PROJECT_DIR/bin/
 
 cd $PROJECT_DIR
+
+chmod +x lush

@@ -1,0 +1,3 @@
+ABSPATH=$(cd "$(dirname "$0")"; pwd -P)
+
+LUA_PATH=$ABSPATH/lib/*lua $ABSPATH/bin/lua $@
