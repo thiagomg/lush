@@ -25,6 +25,18 @@ Why not Ruby?
 Why not (whatever other language)?
 > Because I had to choose one. I got a super popular language as I don't want to be the eternal father of the project. I want something to solve my issues and not creating more. LUA has tons of scripts to do pretty much anything and most of them I just need to copy a lua file to a directory. Isn't it great?
 
-## Documentation
+## Installing
 
-None for now. I will post examples as soon as possible
+Run the script
+
+``` sh
+./build.sh
+```
+
+If it succeeds, you'll have a bin directory with 2 binaries: lua and luac.
+
+You can delete the directory 3rd now with the command:
+
+``` sh
+rm -r ./3rd
+```
