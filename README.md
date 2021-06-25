@@ -40,3 +40,8 @@ You can delete the directory 3rd now with the command:
 ``` sh
 rm -r ./3rd
 ```
+## Roadmap (so far)
+
+- Adding tests in the code (if it makes sense)
+- Adding a shell lib to run shell commands
+- Create a lush binary, that won't be a bash script searching for bin_dir/lib automatically
