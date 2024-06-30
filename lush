@@ -1,9 +1,0 @@
-REALPATH=$(realpath "$0")
-ABSPATH=$(cd "$(dirname "${REALPATH}")"; pwd -P)
-
-if [ ! -f "$ABSPATH/bin/lua" ]; then
-    echo "Please run build.sh"
-    exit 1
-fi
-
-LUA_PATH="${ABSPATH}/lib/?.lua" ${ABSPATH}/bin/lua $@
