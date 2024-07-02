@@ -1,7 +1,7 @@
 use std::env;
 use std::path::PathBuf;
-use mlua::Lua;
-use crate::LushContext;
+use mlua::{Lua, Value};
+use crate::setup::LushContext;
 
 pub(crate) fn pushd(lua: &Lua, new_dir: String) -> mlua::Result<()> {
     let cur_dir = env::current_dir().unwrap();
@@ -33,4 +33,23 @@ pub(crate) fn chdir(_lua: &Lua, new_dir: String) -> mlua::Result<()> {
 pub(crate) fn pwd(_lua: &Lua, _: ()) -> mlua::Result<String> {
     let c = env::current_dir()?.to_str().unwrap().to_string();
     Ok(c)
+}
+
+pub(crate) fn set_env(_lua: &Lua, (name, value): (String, String)) -> mlua::Result<()> {
+    env::set_var(name, value);
+    Ok(())
+}
+
+pub(crate) fn get_env(_lua: &Lua, name: String) -> mlua::Result<Value> {
+    let c = match env::var(name) {
+        Ok(c) => Value::String(_lua.create_string(c)?),
+        Err(_e) => Value::Nil,
+    };
+
+    Ok(c)
+}
+
+pub(crate) fn rem_env(_lua: &Lua, name: String) -> mlua::Result<()> {
+    env::remove_var(name);
+    Ok(())
 }
