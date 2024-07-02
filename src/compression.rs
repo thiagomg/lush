@@ -3,10 +3,20 @@ use std::{fs, io};
 use std::io::{Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
+use mlua::{Lua, Value, Variadic};
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-pub fn zip_deflate(zip_file: &PathBuf, src_files: &[PathBuf], recurse: bool) -> io::Result<()> {
+pub(crate) fn zip_deflate(_lua: &Lua, (zip_name, files_to_add): (String, Variadic<Value>)) -> mlua::Result<()> {
+    let mut files = vec![];
+    for (_i, arg) in files_to_add.iter().enumerate() {
+        files.push(PathBuf::from(arg.to_string()?));
+    }
+    zip_deflate_int(&PathBuf::from(&zip_name), &files, true)?;
+    Ok(())
+}
+
+fn zip_deflate_int(zip_file: &PathBuf, src_files: &[PathBuf], recurse: bool) -> io::Result<()> {
     let dest_file = File::create(zip_file)?;
     let mut writer = zip::ZipWriter::new(dest_file);
     let mut buffer = Vec::new();
