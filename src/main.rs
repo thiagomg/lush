@@ -8,6 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 use clap::Parser;
 use mlua::prelude::*;
+use crate::cmd_line::Args;
 use crate::compression::zip_deflate;
 use crate::environment::{chdir, popd, pushd, pwd};
 use crate::filesystem::{ls, mkdir, rmdir};
