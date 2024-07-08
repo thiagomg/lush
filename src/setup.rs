@@ -76,6 +76,7 @@ pub(crate) fn run_file(script: &str) -> LuaResult<()> {
 
 #[cfg(test)]
 mod tests {
+    use crate::test::data::DATA;
     use super::*;
 
     #[test]
@@ -83,40 +84,15 @@ mod tests {
         run_file(DATA).unwrap();
     }
 
-    const DATA: &str = r##"
-function new_thing()
-    local thing = {}
-    setmetatable(thing, {
-        __close = function()
-            print("thing closed")
-        end
-    })
-    return thing
-end
+    #[test]
+    fn invalid_function() {
+        let data = r##"
 
-do
-    local x <close> = new_thing()
-    print("using thing")
-end
+        env.invalid_func(1)
+        "##;
+        let res = run_file(data).unwrap_err();
 
-local target_dir = '/tmp/lush-1'
-fs.mkdir(target_dir)
-print('pwd: ' .. tostring(env.pwd()))
-files.zip("/tmp/lush-1/new_post.zip", "src")
-
-env.pushd(target_dir)
-local files = fs.ls()
-for i = 1, #files do
-    print(files[i])
-end
-env.popd()
-fs.rmdir(target_dir, { recursive = true })
-
-env.set('NAME', 'Thiago')
-print('ENV: ' .. env.get('NAME'))
-env.del('NAME')
-print('ENV: ' .. tostring(env.get('NAME')))
-
-print('os name: ' .. os.name())
-    "##;
+        let ts = res.to_string();
+        println!("{}", ts);
+    }
 }
