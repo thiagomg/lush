@@ -1,14 +1,16 @@
 use std::path::PathBuf;
 use mlua::Lua;
 use mlua::prelude::LuaResult;
-use crate::compression::zip_deflate;
-use crate::environment::{chdir, get_env, popd, pushd, pwd, rem_env, set_env};
+use crate::files::{zip_deflate, zip_inflate};
+use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
 use crate::filesystem::{ls, mkdir, rmdir};
 use crate::os::os_name;
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
 }
+
+// TODO: Creation of temporary dir (e.g. mktemp)
 
 fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
@@ -19,6 +21,7 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     let get_env_f = lua.create_function(get_env)?;
     let set_env_f = lua.create_function(set_env)?;
     let rem_env_f = lua.create_function(rem_env)?;
+    let print_f = lua.create_function(print)?;
 
     let env_tb = lua.create_table()?;
     env_tb.set("cd", chdir_f)?;
@@ -28,6 +31,7 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     env_tb.set("get", get_env_f)?;
     env_tb.set("set", set_env_f)?;
     env_tb.set("del", rem_env_f)?;
+    env_tb.set("print", print_f)?;
     lua.globals().set("env", env_tb)?;
 
     // File System
@@ -48,9 +52,11 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
 
     // Compression
     let zip_f = lua.create_function(zip_deflate)?;
-    let compression_tb = lua.create_table()?;
-    compression_tb.set("zip", zip_f)?;
-    lua.globals().set("compression", compression_tb)?;
+    let unzip_f = lua.create_function(zip_inflate)?;
+    let files_tb = lua.create_table()?;
+    files_tb.set("zip", zip_f)?;
+    files_tb.set("unzip", unzip_f)?;
+    lua.globals().set("files", files_tb)?;
 
     Ok(())
 }
@@ -96,7 +102,7 @@ end
 local target_dir = '/tmp/lush-1'
 fs.mkdir(target_dir)
 print('pwd: ' .. tostring(env.pwd()))
-compression.zip("/tmp/lush-1/new_post.zip", "src")
+files.zip("/tmp/lush-1/new_post.zip", "src")
 
 env.pushd(target_dir)
 local files = fs.ls()

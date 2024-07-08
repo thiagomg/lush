@@ -1,11 +1,12 @@
 use std::fs::{File, metadata};
 use std::{fs, io};
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use mlua::{Lua, Value, Variadic};
 use zip::write::SimpleFileOptions;
-use zip::ZipWriter;
+use zip::{ZipArchive, ZipWriter};
+use zip::result::ZipResult;
 
 pub(crate) fn zip_deflate(_lua: &Lua, (zip_name, files_to_add): (String, Variadic<Value>)) -> mlua::Result<()> {
     let mut files = vec![];
@@ -52,5 +53,37 @@ fn zip_list(src_files: &[PathBuf], writer: &mut ZipWriter<File>, mut buffer: &mu
             }
         }
     }
+    Ok(())
+}
+
+pub(crate) fn zip_inflate(_lua: &Lua, (zip_name, output_dir): (String, Option<String>)) -> mlua::Result<()> {
+    let output_dir = output_dir.unwrap_or(".".to_string());
+    if let Err(e) = zip_inflate_int(PathBuf::from(zip_name), PathBuf::from(output_dir)) {
+        return Err(io::Error::new(ErrorKind::InvalidData, e.to_string()).into());
+    }
+    Ok(())
+}
+
+fn zip_inflate_int(path: PathBuf, output_dir: PathBuf) -> ZipResult<()> {
+    let file = File::open(&path)?;
+    let mut archive = ZipArchive::new(file)?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let out_path = output_dir.join(file.name());
+
+        if (*file.name()).ends_with('/') {
+            fs::create_dir_all(&out_path)?;
+        } else {
+            if let Some(p) = out_path.parent() {
+                if !p.exists() {
+                    fs::create_dir_all(&p)?;
+                }
+            }
+            let mut outfile = File::create(&out_path)?;
+            std::io::copy(&mut file, &mut outfile)?;
+        }
+    }
+
     Ok(())
 }
