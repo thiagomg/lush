@@ -1,2 +1,6 @@
 bin
 3rd
+.idea
+
+# Added by cargo
+/target
