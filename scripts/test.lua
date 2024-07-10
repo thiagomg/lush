@@ -1,7 +1,5 @@
 env.print('pwd: ' .. tostring(env.pwd()))
 
-env.invalid_f('1')
-
 fs.mkdir('/tmp/lush-ut')
 
 env.print('Zipping files')
