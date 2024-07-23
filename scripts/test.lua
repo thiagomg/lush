@@ -1,3 +1,12 @@
+-- os.execute('ls')
+
+function os:ls()
+    os.execute('ls')
+end
+
+os.ls()
+print('name: ' .. os.name())
+
 env.print('pwd: ' .. tostring(env.pwd()))
 
 fs.mkdir('/tmp/lush-ut')

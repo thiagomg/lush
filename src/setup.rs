@@ -46,9 +46,10 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
 
     // Operating System
     let os_name_f = lua.create_function(os_name)?;
-    let os_tb = lua.create_table()?;
+
+    let os_tb: mlua::Table = lua.globals().get("os")?;
     os_tb.set("name", os_name_f)?;
-    lua.globals().set("os", os_tb)?;
+
 
     // Compression
     let zip_f = lua.create_function(zip_deflate)?;
@@ -82,6 +83,11 @@ mod tests {
     #[test]
     fn run_test_script() {
         run_file(DATA).unwrap();
+    }
+
+    #[test]
+    fn run_builtin_os() {
+        run_file("os.execute('ls')").unwrap();
     }
 
     #[test]
