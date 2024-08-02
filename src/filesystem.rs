@@ -28,7 +28,7 @@ pub(crate) fn ls(_lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Vec<String>
 pub(crate) fn mkdir(_lua: &Lua, path: String) -> mlua::Result<()> {
     let dir = PathBuf::from(path);
     if !Path::exists(&dir) {
-        fs::create_dir(&dir)?;
+        fs::create_dir_all(&dir)?;
     }
     Ok(())
 }
@@ -55,4 +55,43 @@ pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlu
     }
 
     Ok(())
+}
+
+pub(crate) fn copy_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Result<()> {
+    let src_path = PathBuf::from(&src);
+    if !src_path.exists() {
+        return Err(mlua::Error::RuntimeError(format!("Invalid source path {}", src)));
+    }
+
+    let mut target_path = PathBuf::from(&target);
+    if target_path.is_dir() {
+        let fname = src_path.file_name().unwrap();
+        target_path = target_path.join(fname);
+    }
+
+    fs::copy(src_path, target_path)?;
+
+    Ok(())
+}
+
+pub(crate) fn move_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Result<()> {
+    let src_path = PathBuf::from(&src);
+    if !src_path.exists() {
+        return Err(mlua::Error::RuntimeError(format!("Invalid source path {}", src)));
+    }
+
+    let mut target_path = PathBuf::from(&target);
+    if target_path.is_dir() {
+        let fname = src_path.file_name().unwrap();
+        target_path = target_path.join(fname);
+    }
+
+    fs::rename(src_path, target_path)?;
+
+    Ok(())
+}
+
+pub(crate) fn file_exists(_lua: &Lua, src: String) -> mlua::Result<bool> {
+    let src_path = PathBuf::from(&src);
+    Ok(src_path.exists())
 }

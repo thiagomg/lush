@@ -3,7 +3,7 @@ use mlua::Lua;
 use mlua::prelude::LuaResult;
 use crate::files::{zip_deflate, zip_inflate};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
-use crate::filesystem::{ls, mkdir, rmdir};
+use crate::filesystem::{copy_file, file_exists, ls, mkdir, move_file, rmdir};
 use crate::os::os_name;
 
 pub(crate) struct LushContext {
@@ -14,9 +14,9 @@ pub(crate) struct LushContext {
 
 fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
+    let chdir_f = lua.create_function(chdir)?;
     let pushd_f = lua.create_function_mut(pushd)?;
     let popd_f = lua.create_function_mut(popd)?;
-    let chdir_f = lua.create_function(chdir)?;
     let pwd_f = lua.create_function(pwd)?;
     let get_env_f = lua.create_function(get_env)?;
     let set_env_f = lua.create_function(set_env)?;
@@ -38,10 +38,16 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     let ls_f = lua.create_function(ls)?;
     let mkdir_f = lua.create_function(mkdir)?;
     let rmdir_f = lua.create_function(rmdir)?;
+    let copy_f = lua.create_function(copy_file)?;
+    let move_f = lua.create_function(move_file)?;
+    let exists_f = lua.create_function(file_exists)?;
     let filesystem_tb = lua.create_table()?;
     filesystem_tb.set("ls", ls_f)?;
     filesystem_tb.set("mkdir", mkdir_f)?;
     filesystem_tb.set("rmdir", rmdir_f)?;
+    filesystem_tb.set("copy", copy_f)?;
+    filesystem_tb.set("move", move_f)?;
+    filesystem_tb.set("exists", exists_f)?;
     lua.globals().set("fs", filesystem_tb)?;
 
     // Operating System
@@ -62,7 +68,7 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     Ok(())
 }
 
-pub(crate) fn run_file(script: &str) -> LuaResult<()> {
+pub(crate) fn run_script(script: &str) -> LuaResult<()> {
     let lua = Lua::new();
     let ctx = LushContext {
         dir_stack: vec![],
@@ -82,12 +88,12 @@ mod tests {
 
     #[test]
     fn run_test_script() {
-        run_file(DATA).unwrap();
+        run_script(DATA).unwrap();
     }
 
     #[test]
     fn run_builtin_os() {
-        run_file("os.execute('ls')").unwrap();
+        run_script("os.execute('ls')").unwrap();
     }
 
     #[test]
@@ -96,7 +102,7 @@ mod tests {
 
         env.invalid_func(1)
         "##;
-        let res = run_file(data).unwrap_err();
+        let res = run_script(data).unwrap_err();
 
         let ts = res.to_string();
         println!("{}", ts);

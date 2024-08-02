@@ -8,8 +8,9 @@ pub(crate) fn pushd(lua: &Lua, new_dir: String) -> mlua::Result<()> {
     env::set_current_dir(new_dir.clone())?;
     if let Some(mut data) = lua.app_data_mut::<LushContext>() {
         data.dir_stack.push(cur_dir);
-        let stack: Vec<String> = data.dir_stack.iter().map(|x| x.to_str().unwrap().to_string()).collect();
-        println!("pushd: data.dir_stack: {}", stack.join(", "));
+        // TODO: Print stack optionally
+        // let stack: Vec<String> = data.dir_stack.iter().map(|x| x.to_str().unwrap().to_string()).collect();
+        // println!("pushd: data.dir_stack: {}", stack.join(", "));
     }
     Ok(())
 }
@@ -18,8 +19,9 @@ pub(crate) fn popd(lua: &Lua, _: ()) -> mlua::Result<()> {
     if let Some(mut data) = lua.app_data_mut::<LushContext>() {
         if let Some(last_dir) = data.dir_stack.pop() {
             env::set_current_dir(PathBuf::from(last_dir))?;
-            let stack: Vec<String> = data.dir_stack.iter().map(|x| x.to_str().unwrap().to_string()).collect();
-            println!("popd: data.dir_stack: {}", stack.join(", "));
+            // TODO: Print stack optionally
+            // let stack: Vec<String> = data.dir_stack.iter().map(|x| x.to_str().unwrap().to_string()).collect();
+            // println!("popd: data.dir_stack: {}", stack.join(", "));
         }
     }
     Ok(())

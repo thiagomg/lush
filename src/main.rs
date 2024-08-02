@@ -7,34 +7,53 @@ mod setup;
 mod test;
 
 use std::fs;
+use std::path::PathBuf;
 use clap::Parser;
 use colored::Colorize;
+use mlua::Error;
 use regex::Regex;
 use crate::cmd_line::Args;
-use crate::setup::run_file;
+use crate::setup::run_script;
 
 fn main() -> Result<(), String> {
     let args = Args::parse();
     let input_file = args.lua_file;
+    run_file(input_file)
+}
+
+fn run_file(input_file: PathBuf) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone()).expect("Error opening input file");
-    let res = run_file(&script);
+    let res = run_script(&script);
     if let Err(e) = res {
-        println!();
         let error_desc = e.to_string();
 
+        let err_prefix = format!("Error parsing script {}", input_file.to_str().unwrap().to_string());
         let err_desc = if let Some(line) = line_number_from_err(&error_desc) {
-            format!("Error parsing script {}, line {}", input_file.to_str().unwrap().to_string(), line)
+            format!("{}, line {}", err_prefix, line)
         } else {
-            format!("Error parsing script {}", input_file.to_str().unwrap().to_string())
+            err_prefix
         };
 
-        println!("{}", err_desc.red());
-        println!("{}", e);
-        
-        return Err(err_desc);
+        println!("{}", err_desc.red().bold());
+
+        print_error(&e);
+        return Err("Error parsing lush file".to_string());
     }
 
     Ok(())
+}
+
+fn print_error(error: &Error) {
+    match error {
+        Error::SyntaxError { ref message, .. } => println!("{}: {}", "Syntax error".bold(), message),
+        Error::RuntimeError(ref msg) => println!("{}: {}", "Runtime error".bold(), msg),
+        Error::CallbackError { traceback: _traceback, cause } => {
+            print_error(&*cause);
+        }
+        _ => {
+            println!("{}", error);
+        }
+    }
 }
 
 fn line_number_from_err(error_message: &str) -> Option<usize> {
@@ -53,8 +72,7 @@ mod tests {
 
     #[test]
     fn run_test_file() {
-        let script = fs::read_to_string("scripts/test.lua").expect("Error opening input file");
-        let res = run_file(&script);
+        let res = run_file(PathBuf::from("scripts/test.lua"));
         assert!(res.is_ok());
     }
 }
