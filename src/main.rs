@@ -5,6 +5,7 @@ mod filesystem;
 mod os;
 mod setup;
 mod test;
+mod string_utils;
 
 use std::fs;
 use std::path::PathBuf;
@@ -14,6 +15,7 @@ use mlua::Error;
 use regex::Regex;
 use crate::cmd_line::Args;
 use crate::setup::run_script;
+use crate::string_utils::remove_shebang;
 
 fn main() -> Result<(), String> {
     let args = Args::parse();
@@ -23,10 +25,10 @@ fn main() -> Result<(), String> {
 
 fn run_file(input_file: PathBuf) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone()).expect("Error opening input file");
+    let script = remove_shebang(script);
     let res = run_script(&script);
     if let Err(e) = res {
         let error_desc = e.to_string();
-
         let err_prefix = format!("Error parsing script {}", input_file.to_str().unwrap().to_string());
         let err_desc = if let Some(line) = line_number_from_err(&error_desc) {
             format!("{}, line {}", err_prefix, line)
