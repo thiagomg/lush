@@ -4,7 +4,7 @@ LuSH is a lua for shell scripts - embedded in a single binary, easy to share, to
 
 ## The problem
 
-I love Bash. I have tons of bash scripts, they're run only on my machine. If I copy to other hosts, they never work properly because either the bash version is older or some of the shell utils are not available or are not the same version, etc. Surely there are many methods to solve this, but the scripts complexity just increase. In prative, they never work everywhere.
+I love Bash. I have tons of bash scripts, they're run only on my machine. If I copy to other hosts, they never work properly because either the bash version is older or some of the shell utils are not available or are not the same version, etc. Surely there are many methods to solve this, but the scripts complexity just increase. In practice, they never work everywhere.
 
 I want to __simplify__ my life, not the other way around.
 
