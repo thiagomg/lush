@@ -1,3 +1,6 @@
+0.1.7
+- Changed lua to vendored (or, static lua library)
+
 0.1.6
 - Added support for shebang "#!"
 - Upgraded dependencies
