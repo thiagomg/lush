@@ -1,10 +1,3 @@
--- os.execute('ls')
-
-function os:ls()
-    os.execute('ls')
-end
-
-os.ls()
 print('name: ' .. os.name())
 
 env.print('pwd: ' .. tostring(env.pwd()))
@@ -28,8 +21,8 @@ env.print('Entering /tmp')
 env.cd('/tmp')
 env.print('Listing files')
 local files = fs.ls() -- '*.md'
-for i = 1, #files do
-    env.print("- ", files[i])
+for _, file in ipairs(files) do
+    env.print("- ", file)
 end
 
 env.set('NAME', 'Thiago')

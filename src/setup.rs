@@ -14,55 +14,36 @@ pub(crate) struct LushContext {
 
 fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
-    let chdir_f = lua.create_function(chdir)?;
-    let pushd_f = lua.create_function_mut(pushd)?;
-    let popd_f = lua.create_function_mut(popd)?;
-    let pwd_f = lua.create_function(pwd)?;
-    let get_env_f = lua.create_function(get_env)?;
-    let set_env_f = lua.create_function(set_env)?;
-    let rem_env_f = lua.create_function(rem_env)?;
-    let print_f = lua.create_function(print)?;
-
     let env_tb = lua.create_table()?;
-    env_tb.set("cd", chdir_f)?;
-    env_tb.set("pushd", pushd_f)?;
-    env_tb.set("popd", popd_f)?;
-    env_tb.set("pwd", pwd_f)?;
-    env_tb.set("get", get_env_f)?;
-    env_tb.set("set", set_env_f)?;
-    env_tb.set("del", rem_env_f)?;
-    env_tb.set("print", print_f)?;
+    env_tb.set("cd", lua.create_function(chdir)?)?;
+    env_tb.set("pushd", lua.create_function_mut(pushd)?)?;
+    env_tb.set("popd", lua.create_function_mut(popd)?)?;
+    env_tb.set("pwd", lua.create_function(pwd)?)?;
+    env_tb.set("get", lua.create_function(get_env)?)?;
+    env_tb.set("set", lua.create_function(set_env)?)?;
+    env_tb.set("del", lua.create_function(rem_env)?)?;
+    env_tb.set("print", lua.create_function(print)?)?;
     lua.globals().set("env", env_tb)?;
 
     // File System
-    let ls_f = lua.create_function(ls)?;
-    let mkdir_f = lua.create_function(mkdir)?;
-    let rmdir_f = lua.create_function(rmdir)?;
-    let copy_f = lua.create_function(copy_file)?;
-    let move_f = lua.create_function(move_file)?;
-    let exists_f = lua.create_function(file_exists)?;
     let filesystem_tb = lua.create_table()?;
-    filesystem_tb.set("ls", ls_f)?;
-    filesystem_tb.set("mkdir", mkdir_f)?;
-    filesystem_tb.set("rmdir", rmdir_f)?;
-    filesystem_tb.set("copy", copy_f)?;
-    filesystem_tb.set("move", move_f)?;
-    filesystem_tb.set("exists", exists_f)?;
+    filesystem_tb.set("ls", lua.create_function(ls)?)?;
+    filesystem_tb.set("mkdir", lua.create_function(mkdir)?)?;
+    filesystem_tb.set("rmdir", lua.create_function(rmdir)?)?;
+    filesystem_tb.set("copy", lua.create_function(copy_file)?)?;
+    filesystem_tb.set("move", lua.create_function(move_file)?)?;
+    filesystem_tb.set("exists", lua.create_function(file_exists)?)?;
     lua.globals().set("fs", filesystem_tb)?;
 
     // Operating System
-    let os_name_f = lua.create_function(os_name)?;
-
     let os_tb: mlua::Table = lua.globals().get("os")?;
-    os_tb.set("name", os_name_f)?;
+    os_tb.set("name", lua.create_function(os_name)?)?;
 
 
     // Compression
-    let zip_f = lua.create_function(zip_deflate)?;
-    let unzip_f = lua.create_function(zip_inflate)?;
     let files_tb = lua.create_table()?;
-    files_tb.set("zip", zip_f)?;
-    files_tb.set("unzip", unzip_f)?;
+    files_tb.set("zip", lua.create_function(zip_deflate)?)?;
+    files_tb.set("unzip", lua.create_function(zip_inflate)?)?;
     lua.globals().set("files", files_tb)?;
 
     Ok(())

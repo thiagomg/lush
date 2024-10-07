@@ -42,6 +42,6 @@ Run the script
 cargo install lush
 ```
 
-## Roadmap (so far)
+## Documentation of LuSH extensions
 
-- List all new lush functions with parameters
+Please refer to the doc directory of this repository. Each module has its own file

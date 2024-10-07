@@ -3,7 +3,30 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use mlua::{Lua, Table, Value, Variadic};
 
-// TODO: Parse masks, such as *.md
+/// Lists the contents of the specified directory or the current directory if no path is provided.
+///
+/// If a path is provided, it lists the files in that directory. Otherwise, it lists the contents
+/// of the current working directory.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `paths` - A variadic list of directory paths to list. Only the first path is used.
+///
+/// # Returns
+///
+/// * A vector of strings containing the file paths within the directory.
+///
+/// # Errors
+///
+/// * Returns an error if the directory cannot be read.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// local files = fs.ls("/some/directory")
+/// print(files)
+/// ```
 pub(crate) fn ls(_lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Vec<String>> {
     let mut src_path = if paths.is_empty() {
         vec![PathBuf::from(".")]
@@ -25,6 +48,25 @@ pub(crate) fn ls(_lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Vec<String>
     Ok(files)
 }
 
+/// Creates a directory at the specified path.
+///
+/// Recursively creates all parent directories if they do not exist.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `path` - The directory path to create.
+///
+/// # Returns
+///
+/// * `Ok(())` if the directory is successfully created.
+/// * Returns an error if the directory cannot be created.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// fs.mkdir("/new/directory")
+/// ```
 pub(crate) fn mkdir(_lua: &Lua, path: String) -> mlua::Result<()> {
     let dir = PathBuf::from(path);
     if !Path::exists(&dir) {
@@ -33,6 +75,26 @@ pub(crate) fn mkdir(_lua: &Lua, path: String) -> mlua::Result<()> {
     Ok(())
 }
 
+/// Removes a directory at the specified path.
+///
+/// Supports recursive deletion through an optional argument.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `path` - The directory path to remove.
+/// * `options` - Optional table containing a `recursive` flag. If `true`, the directory and its contents are deleted recursively.
+///
+/// # Returns
+///
+/// * `Ok(())` if the directory is successfully removed.
+/// * Returns an error if the path is not a directory or the deletion fails.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// fs.rmdir("/some/directory", { recursive = true })
+/// ```
 pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlua::Result<()> {
     let md = fs::metadata(&path)?;
     if !md.is_dir() {
@@ -57,6 +119,26 @@ pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlu
     Ok(())
 }
 
+/// Copies a file from the source path to the target path.
+///
+/// If the target path is a directory, the file is copied into the directory with its original name.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `src` - The source file path.
+/// * `target` - The target file or directory path.
+///
+/// # Returns
+///
+/// * `Ok(())` if the file is successfully copied.
+/// * Returns an error if the source file does not exist or the copy operation fails.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// fs.copy("/path/to/source", "/path/to/destination")
+/// ```
 pub(crate) fn copy_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Result<()> {
     let src_path = PathBuf::from(&src);
     if !src_path.exists() {
@@ -74,6 +156,26 @@ pub(crate) fn copy_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Re
     Ok(())
 }
 
+/// Moves a file from the source path to the target path.
+///
+/// If the target path is a directory, the file is moved into the directory with its original name.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `src` - The source file path.
+/// * `target` - The target file or directory path.
+///
+/// # Returns
+///
+/// * `Ok(())` if the file is successfully moved.
+/// * Returns an error if the source file does not exist or the move operation fails.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// fs.move("/path/to/source", "/path/to/destination")
+/// ```
 pub(crate) fn move_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Result<()> {
     let src_path = PathBuf::from(&src);
     if !src_path.exists() {
@@ -91,6 +193,23 @@ pub(crate) fn move_file(_lua: &Lua, (src, target): (String, String)) -> mlua::Re
     Ok(())
 }
 
+/// Checks if a file exists at the specified path.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `src` - The file path to check.
+///
+/// # Returns
+///
+/// * `true` if the file exists, `false` otherwise.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// local exists = fs.exists("/path/to/file")
+/// print(exists)
+/// ```
 pub(crate) fn file_exists(_lua: &Lua, src: String) -> mlua::Result<bool> {
     let src_path = PathBuf::from(&src);
     Ok(src_path.exists())
