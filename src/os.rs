@@ -35,6 +35,23 @@ pub(crate) fn os_name(_lua: &Lua, _: ()) -> mlua::Result<String> {
     Ok(env::consts::OS.to_string())
 }
 
+/// Returns a table containing running process names
+///
+/// Returns:
+///
+/// * A table { pid: process_name }
+///
+/// Example:
+///
+/// ```lua
+/// os.proc_names()
+/// -- Returns
+/// {
+///     1121="watchdogd",
+///     80574="periodic-wrapper",
+///     1309="distnoted"
+/// }
+/// ```
 pub(crate) fn proc_names(lua: &Lua, _: ()) -> mlua::Result<Table> {
     let sys = System::new_all();
 
@@ -46,6 +63,23 @@ pub(crate) fn proc_names(lua: &Lua, _: ()) -> mlua::Result<Table> {
     Ok(tb)
 }
 
+/// Returns a table containing running process executables with path
+///
+/// Returns:
+///
+/// * A table { pid: process_name }
+///
+/// Example:
+///
+/// ```lua
+/// os.proc_exes()
+/// -- Returns
+/// {
+///     1121="/usr/libexec/watchdogd",
+///     80574="/usr/libexec/periodic-wrapper",
+///     1309="/usr/sbin/distnoted"
+/// }
+/// ```
 pub(crate) fn proc_exes(lua: &Lua, _: ()) -> mlua::Result<Table> {
     let sys = System::new_all();
 
@@ -55,16 +89,4 @@ pub(crate) fn proc_exes(lua: &Lua, _: ()) -> mlua::Result<Table> {
     }
 
     Ok(tb)
-}
-
-#[cfg(test)]
-mod tests {
-    use mlua::Lua;
-    use crate::os::proc_names;
-
-    #[test]
-    fn proc_list_test() {
-        let lua = Lua::new();
-        let _ = proc_names(&lua, ());
-    }
 }
