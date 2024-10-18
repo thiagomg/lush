@@ -16,3 +16,4 @@ whoami = "1.5.2"
 clap = { version = "4.5.19", features = ["derive"] }
 regex = "1.11.0"
 colored = "2.1.0"
+sysinfo = "0.32.0"

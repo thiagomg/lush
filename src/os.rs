@@ -1,5 +1,6 @@
 use std::env;
-use mlua::Lua;
+use mlua::{Lua, Table};
+use sysinfo::System;
 
 /// Returns the name of the operating system the program is running on.
 ///
@@ -32,4 +33,38 @@ use mlua::Lua;
 /// ```
 pub(crate) fn os_name(_lua: &Lua, _: ()) -> mlua::Result<String> {
     Ok(env::consts::OS.to_string())
+}
+
+pub(crate) fn proc_names(lua: &Lua, _: ()) -> mlua::Result<Table> {
+    let sys = System::new_all();
+
+    let tb = lua.create_table()?;
+    for (pid, process) in sys.processes() {
+        tb.set(pid.as_u32(), process.name().to_str().unwrap())?;
+    }
+
+    Ok(tb)
+}
+
+pub(crate) fn proc_exes(lua: &Lua, _: ()) -> mlua::Result<Table> {
+    let sys = System::new_all();
+
+    let tb = lua.create_table()?;
+    for (pid, process) in sys.processes() {
+        tb.set(pid.as_u32(), process.exe().unwrap().to_str().unwrap())?;
+    }
+
+    Ok(tb)
+}
+
+#[cfg(test)]
+mod tests {
+    use mlua::Lua;
+    use crate::os::proc_names;
+
+    #[test]
+    fn proc_list_test() {
+        let lua = Lua::new();
+        let _ = proc_names(&lua, ());
+    }
 }

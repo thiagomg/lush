@@ -4,7 +4,7 @@ use mlua::prelude::LuaResult;
 use crate::files::{zip_deflate, zip_inflate};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
 use crate::filesystem::{copy_file, file_exists, ls, mkdir, move_file, rmdir};
-use crate::os::os_name;
+use crate::os::{os_name, proc_exes, proc_names};
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
@@ -38,8 +38,9 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Operating System
     let os_tb: mlua::Table = lua.globals().get("os")?;
     os_tb.set("name", lua.create_function(os_name)?)?;
-
-
+    os_tb.set("proc_names", lua.create_function(proc_names)?)?;
+    os_tb.set("proc_exes", lua.create_function(proc_exes)?)?;
+    
     // Compression
     let files_tb = lua.create_table()?;
     files_tb.set("zip", lua.create_function(zip_deflate)?)?;

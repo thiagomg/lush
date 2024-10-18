@@ -30,3 +30,47 @@ Example:
 ```lua
 print("Operating System:", os.name())
 ```
+
+---
+
+`os.proc_names()`
+
+Returns a table containing running process names
+
+Returns:
+
+* A table { pid: process_name }
+
+Example:
+
+```lua
+os.proc_names()
+-- Returns
+{
+    1121="watchdogd",
+    80574="periodic-wrapper",
+    1309="distnoted"
+}
+```
+
+---
+
+`os.proc_exes()`
+
+Returns a table containing running process executables with path
+
+Returns:
+
+* A table { pid: process_name }
+
+Example:
+
+```lua
+os.proc_exes()
+-- Returns
+{
+    1121="/usr/libexec/watchdogd",
+    80574="/usr/libexec/periodic-wrapper",
+    1309="/usr/sbin/distnoted"
+}
+```

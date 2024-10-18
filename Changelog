@@ -1,5 +1,6 @@
 0.1.8
 - Added LuSH documentation
+- Added process listing (os.proc_names, os.proc_exes)
 
 0.1.7
 - Changed lua to vendored (or, static lua library)
