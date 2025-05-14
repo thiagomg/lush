@@ -1,3 +1,7 @@
+0.2.0
+- Added pipeline exec for external binaries
+- E.g. exec({ {"cat", "~/my-file.log"}, {"grep", "error"} })
+
 0.1.8
 - Added LuSH documentation
 - Added process listing (os.proc_names, os.proc_exes)

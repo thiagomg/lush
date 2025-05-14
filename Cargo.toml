@@ -1,19 +1,20 @@
 [package]
 name = "lush"
 description = "LuSH is a lua for shell scripts - embedded in a single binary, easy to share, to run everywhere"
-version = "0.1.8"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 authors = ["Thiago Massari Guedes"]
 license = "Apache-2.0"
 homepage = "https://gitlab.com/thiagomg/lush"
 repository = "https://gitlab.com/thiagomg/lush"
 
 [dependencies]
-mlua = { version = "0.9.9", features = ["vendored", "lua54"] }
-zip = { version = "2.2.0", features = ["deflate"] }
+mlua = { version = "0.11.0-beta.1", features = ["vendored", "lua54", "send"] }
+zip = { version = "2", features = ["deflate"] }
 anyhow = "1.0.89"
 whoami = "1.5.2"
-clap = { version = "4.5.19", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 regex = "1.11.0"
-colored = "2.1.0"
-sysinfo = "0.32.0"
+colored = "3"
+sysinfo = "0"
+os_pipe = "1.2.1"

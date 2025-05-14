@@ -129,7 +129,9 @@ pub(crate) fn pwd(_lua: &Lua, _: ()) -> mlua::Result<String> {
 /// env.set("MY_VAR", "some_value")
 /// ```
 pub(crate) fn set_env(_lua: &Lua, (name, value): (String, String)) -> mlua::Result<()> {
-    env::set_var(name, value);
+    unsafe {
+        env::set_var(name, value);
+    }
     Ok(())
 }
 
@@ -178,7 +180,7 @@ pub(crate) fn get_env(_lua: &Lua, name: String) -> mlua::Result<Value> {
 /// env.del("MY_VAR")
 /// ```
 pub(crate) fn rem_env(_lua: &Lua, name: String) -> mlua::Result<()> {
-    env::remove_var(name);
+    unsafe { env::remove_var(name); }
     Ok(())
 }
 
@@ -197,7 +199,13 @@ pub(crate) fn rem_env(_lua: &Lua, name: String) -> mlua::Result<()> {
 /// env.print("Hello", "World", 123)
 /// ```
 pub(crate) fn print(_lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
-    let res: Vec<String> = tokens.iter().map(|x| x.to_string().unwrap().to_string()).collect();
-    println!("{}", res.join(" "));
+    let tab_count = tokens.iter().filter(|x| x.is_table()).count();
+    if tab_count > 0 {
+        println!("{:#?}", tokens);    
+    } else {
+        let res: Vec<String> = tokens.iter().map(|x| x.to_string().unwrap().to_string()).collect();
+        println!("{}", res.join(" "));
+    }
     Ok(())
 }
+

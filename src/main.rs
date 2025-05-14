@@ -6,6 +6,7 @@ mod os;
 mod setup;
 mod test;
 mod string_utils;
+mod core;
 
 use std::fs;
 use std::path::PathBuf;
@@ -16,6 +17,7 @@ use regex::Regex;
 use crate::cmd_line::Args;
 use crate::setup::run_script;
 use crate::string_utils::remove_shebang;
+
 
 fn main() -> Result<(), String> {
     let args = Args::parse();
@@ -47,8 +49,8 @@ fn run_file(input_file: PathBuf) -> Result<(), String> {
 
 fn print_error(error: &Error) {
     match error {
-        Error::SyntaxError { ref message, .. } => println!("{}: {}", "Syntax error".bold(), message),
-        Error::RuntimeError(ref msg) => println!("{}: {}", "Runtime error".bold(), msg),
+        Error::SyntaxError { message, .. } => println!("{}: {}", "Syntax error".bold(), message),
+        Error::RuntimeError(msg) => println!("{}: {}", "Runtime error".bold(), msg),
         Error::CallbackError { traceback: _traceback, cause } => {
             print_error(&*cause);
         }
@@ -75,6 +77,12 @@ mod tests {
     #[test]
     fn run_test_file() {
         let res = run_file(PathBuf::from("scripts/test.lua"));
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_run_pipeline() {
+        let res = run_file(PathBuf::from("scripts/pipetest.lua"));
         assert!(res.is_ok());
     }
 }

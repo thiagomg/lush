@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use mlua::Lua;
 use mlua::prelude::LuaResult;
+use crate::core::run_exec;
 use crate::files::{zip_deflate, zip_inflate};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
 use crate::filesystem::{copy_file, file_exists, ls, mkdir, move_file, rmdir};
@@ -47,11 +48,14 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     files_tb.set("unzip", lua.create_function(zip_inflate)?)?;
     lua.globals().set("files", files_tb)?;
 
+    lua.globals().set("exec", lua.create_function(run_exec)?)?;
+
     Ok(())
 }
 
 pub(crate) fn run_script(script: &str) -> LuaResult<()> {
     let lua = Lua::new();
+
     let ctx = LushContext {
         dir_stack: vec![],
     };
@@ -89,4 +93,6 @@ mod tests {
         let ts = res.to_string();
         println!("{}", ts);
     }
+    
+    
 }
