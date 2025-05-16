@@ -40,7 +40,7 @@ pub(crate) fn ls(_lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Vec<String>
 
     // TODO: Read more than one
     let src_path = src_path.pop().unwrap();
-    let files: Vec<String> = fs::read_dir(&src_path)?.into_iter()
+    let files: Vec<String> = fs::read_dir(&src_path)?
         .map(|f| f.unwrap().path())
         .map(|f| f.to_str().unwrap().to_string())
         .collect();

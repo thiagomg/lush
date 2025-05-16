@@ -1,5 +1,4 @@
 use std::env;
-use std::path::PathBuf;
 use mlua::{Lua, Value, Variadic};
 use crate::setup::LushContext;
 
@@ -57,7 +56,7 @@ pub(crate) fn pushd(lua: &Lua, new_dir: String) -> mlua::Result<()> {
 pub(crate) fn popd(lua: &Lua, _: ()) -> mlua::Result<()> {
     if let Some(mut data) = lua.app_data_mut::<LushContext>() {
         if let Some(last_dir) = data.dir_stack.pop() {
-            env::set_current_dir(PathBuf::from(last_dir))?;
+            env::set_current_dir(last_dir)?;
             // TODO: Print stack optionally
             // let stack: Vec<String> = data.dir_stack.iter().map(|x| x.to_str().unwrap().to_string()).collect();
             // println!("popd: data.dir_stack: {}", stack.join(", "));

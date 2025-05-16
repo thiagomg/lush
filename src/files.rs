@@ -31,7 +31,7 @@ use zip::result::ZipResult;
 /// ```
 pub(crate) fn zip_deflate(_lua: &Lua, (zip_name, files_to_add): (String, Variadic<Value>)) -> mlua::Result<()> {
     let mut files = vec![];
-    for (_i, arg) in files_to_add.iter().enumerate() {
+    for arg in files_to_add.iter() {
         files.push(PathBuf::from(arg.to_string()?));
     }
     zip_deflate_int(&PathBuf::from(&zip_name), &files, true)?;
@@ -77,7 +77,7 @@ fn zip_deflate_int(zip_file: &PathBuf, src_files: &[PathBuf], recurse: bool) -> 
 /// # Returns
 ///
 /// * An `io::Result` indicating success or an error if the operation fails.
-fn zip_list(src_files: &[PathBuf], writer: &mut ZipWriter<File>, mut buffer: &mut Vec<u8>, recurse: bool) -> io::Result<()> {
+fn zip_list(src_files: &[PathBuf], writer: &mut ZipWriter<File>, buffer: &mut Vec<u8>, recurse: bool) -> io::Result<()> {
     for src_path in src_files.iter() {
         let md = metadata(src_path).unwrap();
         if md.is_file() {
@@ -87,16 +87,16 @@ fn zip_list(src_files: &[PathBuf], writer: &mut ZipWriter<File>, mut buffer: &mu
 
             writer.start_file(src_path.to_str().unwrap(), options)?;
             let mut f = File::open(src_path)?;
-            f.read_to_end(&mut buffer)?;
-            writer.write_all(&buffer)?;
+            f.read_to_end(buffer)?;
+            writer.write_all(buffer)?;
             buffer.clear();
         } else if md.is_dir() {
             let options = SimpleFileOptions::default()
                 .compression_method(zip::CompressionMethod::Deflated);
             writer.add_directory(src_path.to_str().unwrap(), options)?;
             if recurse {
-                let files: Vec<PathBuf> = fs::read_dir(&src_path)?
-                    .into_iter().map(|f| f.unwrap().path()).collect();
+                let files: Vec<PathBuf> = fs::read_dir(src_path)?
+                    .map(|f| f.unwrap().path()).collect();
 
                 zip_list(&files, writer, buffer, recurse)?;
             }
@@ -159,7 +159,7 @@ fn zip_inflate_int(path: PathBuf, output_dir: PathBuf) -> ZipResult<()> {
         } else {
             if let Some(p) = out_path.parent() {
                 if !p.exists() {
-                    fs::create_dir_all(&p)?;
+                    fs::create_dir_all(p)?;
                 }
             }
             let mut outfile = File::create(&out_path)?;

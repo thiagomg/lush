@@ -6,7 +6,7 @@ mod os;
 mod setup;
 mod test;
 mod string_utils;
-mod core;
+mod pipeline_exec;
 
 use std::fs;
 use std::path::PathBuf;
@@ -31,7 +31,7 @@ fn run_file(input_file: PathBuf) -> Result<(), String> {
     let res = run_script(&script);
     if let Err(e) = res {
         let error_desc = e.to_string();
-        let err_prefix = format!("Error parsing script {}", input_file.to_str().unwrap().to_string());
+        let err_prefix = format!("Error parsing script {}", input_file.to_str().unwrap());
         let err_desc = if let Some(line) = line_number_from_err(&error_desc) {
             format!("{}, line {}", err_prefix, line)
         } else {
@@ -52,7 +52,7 @@ fn print_error(error: &Error) {
         Error::SyntaxError { message, .. } => println!("{}: {}", "Syntax error".bold(), message),
         Error::RuntimeError(msg) => println!("{}: {}", "Runtime error".bold(), msg),
         Error::CallbackError { traceback: _traceback, cause } => {
-            print_error(&*cause);
+            print_error(cause);
         }
         _ => {
             println!("{}", error);
