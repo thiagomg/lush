@@ -7,6 +7,7 @@ mod setup;
 mod test;
 mod string_utils;
 mod pipeline_exec;
+mod compress;
 
 use std::fs;
 use std::path::PathBuf;
@@ -77,6 +78,7 @@ mod tests {
     #[test]
     fn run_test_file() {
         let res = run_file(PathBuf::from("scripts/test.lua"));
+        println!("{:?}", res);
         assert!(res.is_ok());
     }
 

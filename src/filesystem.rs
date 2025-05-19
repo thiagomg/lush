@@ -109,10 +109,10 @@ pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlu
     }
 
     if rec {
-        println!("Deleting recursively");
+        // println!("Deleting recursively");
         fs::remove_dir_all(PathBuf::from(&path))?;
     } else {
-        println!("Deleting directory");
+        // println!("Deleting directory");
         fs::remove_dir(PathBuf::from(&path))?;
     }
 
@@ -214,3 +214,5 @@ pub(crate) fn file_exists(_lua: &Lua, src: String) -> mlua::Result<bool> {
     let src_path = PathBuf::from(&src);
     Ok(src_path.exists())
 }
+
+// TODO: Delete files
