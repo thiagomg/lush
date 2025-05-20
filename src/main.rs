@@ -23,13 +23,13 @@ use crate::string_utils::remove_shebang;
 fn main() -> Result<(), String> {
     let args = Args::parse();
     let input_file = args.lua_file;
-    run_file(input_file)
+    run_file(input_file, args.script_args)
 }
 
-fn run_file(input_file: PathBuf) -> Result<(), String> {
+fn run_file(input_file: PathBuf, args: Vec<String>) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone()).expect("Error opening input file");
     let script = remove_shebang(script);
-    let res = run_script(&script);
+    let res = run_script(&script, input_file.clone(), args);
     if let Err(e) = res {
         let error_desc = e.to_string();
         let err_prefix = format!("Error parsing script {}", input_file.to_str().unwrap());
@@ -77,14 +77,14 @@ mod tests {
 
     #[test]
     fn run_test_file() {
-        let res = run_file(PathBuf::from("scripts/test.lua"));
+        let res = run_file(PathBuf::from("scripts/test.lua"), vec![]);
         println!("{:?}", res);
         assert!(res.is_ok());
     }
 
     #[test]
     fn test_run_pipeline() {
-        let res = run_file(PathBuf::from("scripts/pipetest.lua"));
+        let res = run_file(PathBuf::from("scripts/pipetest.lua"), vec![]);
         assert!(res.is_ok());
     }
 }

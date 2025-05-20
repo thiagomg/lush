@@ -215,4 +215,51 @@ pub(crate) fn file_exists(_lua: &Lua, src: String) -> mlua::Result<bool> {
     Ok(src_path.exists())
 }
 
-// TODO: Delete files
+/// Deletes a file at the specified path.
+///
+/// # Arguments
+///
+/// * `_lua` - The Lua state (not used in this function).
+/// * `path` - The directory path to remove.
+/// * `options` - Optional table containing a `recursive` flag. If `true`, the directory and its contents are deleted recursively.
+///
+/// # Returns
+///
+/// * `true` if the file exists, `false` otherwise.
+///
+/// # Example (in Lua)
+///
+/// ```lua
+/// local deleted = fs.delete("/path/to/file")
+/// print(deleted)
+/// ```
+pub(crate) fn delete_file(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlua::Result<bool> {
+    let path = PathBuf::from(&path);
+    let mut recursive: bool = false;
+    if let Some(ref tb) = options {
+        if tb.contains_key("recursive")? {
+            recursive = tb.get("recursive")?;
+        }
+    }
+
+    match delete_recursively(path, recursive) {
+        Ok(v) => Ok(v),
+        Err(e) => Err(mlua::Error::RuntimeError(e.to_string())),
+    }
+}
+
+fn delete_recursively<P: AsRef<Path>>(path: P, recursive: bool) -> io::Result<bool> {
+    let path = path.as_ref();
+    if path.is_dir() {
+        if recursive {
+            fs::remove_dir_all(path)?;
+        } else {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "path is a directory"));
+        }
+    } else if path.is_file() {
+        fs::remove_file(path)?;
+    } else {
+        return Ok(false);
+    }
+    Ok(true)
+}

@@ -111,6 +111,28 @@ Example:
 ```lua
 fs.move("/path/to/source", "/path/to/destination")
 ```
+---
+
+`fs.rm(path, options)`
+
+Removes a file at the specified path. You can optionally specify whether to delete recursively, if a directory.
+
+Parameters:
+
+* path (string) - The directory path to remove.
+* options (table) - Optional. A table with the key `recursive` (boolean). If `true`, the directory and all its contents
+  are deleted.
+
+Returns:
+
+* Nothing.
+
+Example:
+
+```lua
+fs.rm("/some/file")
+fs.rm("/some/directory", { recursive = true })
+```
 
 ---
 

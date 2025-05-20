@@ -1,0 +1,7 @@
+local M = {}
+
+function M.plus_ten(val)
+    return val + 10
+end
+
+return M

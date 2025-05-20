@@ -6,4 +6,7 @@ use clap::Parser;
 pub struct Args {
     /// Lua file to be interpreted and executed
     pub lua_file: PathBuf,
+
+    /// Arguments to be passed to the script
+    pub script_args: Vec<String>,
 }

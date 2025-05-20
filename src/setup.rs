@@ -4,7 +4,7 @@ use mlua::prelude::LuaResult;
 use crate::pipeline_exec::run_exec;
 use crate::files::{compress, create_zip, decompress, extract_zip};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
-use crate::filesystem::{copy_file, file_exists, ls, mkdir, move_file, rmdir};
+use crate::filesystem::{copy_file, delete_file, file_exists, ls, mkdir, move_file, rmdir};
 use crate::os::{os_name, proc_exes, proc_names};
 
 pub(crate) struct LushContext {
@@ -33,6 +33,7 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     filesystem_tb.set("rmdir", lua.create_function(rmdir)?)?;
     filesystem_tb.set("copy", lua.create_function(copy_file)?)?;
     filesystem_tb.set("move", lua.create_function(move_file)?)?;
+    filesystem_tb.set("rm", lua.create_function(delete_file)?)?;
     filesystem_tb.set("exists", lua.create_function(file_exists)?)?;
     lua.globals().set("fs", filesystem_tb)?;
 
@@ -55,14 +56,27 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     Ok(())
 }
 
-pub(crate) fn run_script(script: &str) -> LuaResult<()> {
+pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -> LuaResult<()> {
     let lua = Lua::new();
-
     let ctx = LushContext {
         dir_stack: vec![],
     };
     lua.set_app_data(ctx);
     set_utils(&lua)?;
+
+    let mut full_args = vec![input_file.to_str().unwrap().to_string()];
+    full_args.extend(args);
+
+    // Build the Lua `arg` table
+    lua.globals().set("arg", lua.create_table_from(
+        full_args.iter().enumerate().map(|(i, arg)| (i, arg.clone()))
+    )?)?;
+
+    // Adding the script directory to the package path to simplify module loading
+    let script_dir = input_file.parent().unwrap().to_str().unwrap();
+    let add_path = format!(r#"package.path = "{}/?.lua;{}/?.lush;" .. package.path"#, script_dir, script_dir);
+    println!("add_path: {}", add_path);
+    lua.load(&add_path).exec()?;
 
     lua.load(script).exec()?;
 
@@ -76,12 +90,12 @@ mod tests {
 
     #[test]
     fn run_test_script() {
-        run_script(DATA).unwrap();
+        run_script(DATA, PathBuf::from("script.lua"), vec![]).unwrap();
     }
 
     #[test]
     fn run_builtin_os() {
-        run_script("os.execute('ls')").unwrap();
+        run_script("os.execute('ls')", PathBuf::from("script.lua"), vec![]).unwrap();
     }
 
     #[test]
@@ -90,7 +104,7 @@ mod tests {
 
         env.invalid_func(1)
         "##;
-        let res = run_script(data).unwrap_err();
+        let res = run_script(data, PathBuf::from("script.lua"), vec![]).unwrap_err();
 
         let ts = res.to_string();
         println!("{}", ts);
