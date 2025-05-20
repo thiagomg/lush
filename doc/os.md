@@ -74,3 +74,49 @@ os.proc_exes()
     1309="/usr/sbin/distnoted"
 }
 ```
+
+---
+
+`os.exec()`
+
+Executes one or more commands in parallel, piping the result into the next command
+
+Returns:
+
+* Output of the last command in the pipe
+
+Example:
+
+```lua
+-- content of ~/my-file.log:
+-- error 1 - asd
+-- this worked ok
+-- error 2 - asd
+
+function in_brackets(x)
+    return '[' .. x .. ']'
+end
+
+function only_errors(x)
+    if string.find(x, 'error') then
+        return x
+    end
+end
+
+os.exec({
+    {"cat", "/tmp/my-file.log"},
+    {in_brackets},
+    {"grep", "error"},
+})
+
+os.exec({
+    {"cat", "/tmp/my-file.log"},
+    {in_brackets},
+    {only_errors},
+})
+
+-- both return 
+-- [error 1 - asd]
+-- [error 2 - asd]
+
+```

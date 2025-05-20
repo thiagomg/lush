@@ -1,3 +1,7 @@
+0.5.0
+- moved exec to os package
+- removed println forgotten in the code
+
 0.4.0
 - Added fs.rm and support for cmd line arguments in arg global
 - Automatically adding script dir to package.path for ?.lua and ?.lush

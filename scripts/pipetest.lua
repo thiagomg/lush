@@ -12,10 +12,15 @@ function only_errors(x)
     end
 end
 
-exec({
-    {"cat", "~/my-file.log"},
+os.exec({
+    {"cat", "/tmp/my-file.log"},
     {in_brackets},
-    -- {"grep", "error"},
-    {only_errors},
-    {showme},
+    {"grep", "error"},
 })
+
+os.exec({
+    {"cat", "/tmp/my-file.log"},
+    {in_brackets},
+    {only_errors},
+})
+

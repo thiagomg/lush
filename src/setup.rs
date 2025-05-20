@@ -42,7 +42,8 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     os_tb.set("name", lua.create_function(os_name)?)?;
     os_tb.set("proc_names", lua.create_function(proc_names)?)?;
     os_tb.set("proc_exes", lua.create_function(proc_exes)?)?;
-    
+    os_tb.set("exec", lua.create_function(run_exec)?)?;
+
     // Compression
     let files_tb = lua.create_table()?;
     files_tb.set("zip", lua.create_function(create_zip)?)?;
@@ -50,8 +51,6 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     files_tb.set("compress", lua.create_function(compress)?)?;
     files_tb.set("decompress", lua.create_function(decompress)?)?;
     lua.globals().set("files", files_tb)?;
-
-    lua.globals().set("exec", lua.create_function(run_exec)?)?;
 
     Ok(())
 }
@@ -75,7 +74,6 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
     // Adding the script directory to the package path to simplify module loading
     let script_dir = input_file.parent().unwrap().to_str().unwrap();
     let add_path = format!(r#"package.path = "{}/?.lua;{}/?.lush;" .. package.path"#, script_dir, script_dir);
-    println!("add_path: {}", add_path);
     lua.load(&add_path).exec()?;
 
     lua.load(script).exec()?;
