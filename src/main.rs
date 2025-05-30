@@ -8,6 +8,7 @@ mod test;
 mod string_utils;
 mod pipeline_exec;
 mod compress;
+mod net;
 
 use std::fs;
 use std::path::PathBuf;

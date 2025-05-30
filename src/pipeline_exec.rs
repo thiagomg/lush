@@ -1,7 +1,7 @@
 use std::{io, thread};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
-use mlua::{Function, Lua, Result, Table, Value};
+use mlua::{Function, Lua, Result, Table, Value, Variadic};
 use mlua::Error::SyntaxError;
 
 use std::process::{Child, Command, Stdio};
@@ -98,32 +98,113 @@ fn process_command(t: Table) -> Result<PipelineStep> {
     }
 }
 
-pub fn run_exec(_lua: &Lua, table: Table) -> mlua::Result<()> {
-    let mut cmds: Vec<PipelineStep> = vec![];
-    for pair in table.sequence_values::<Value>() {
-        let value = pair?;
-        match value {
-            Value::Table(t) => {
-                let cmd = process_command(t)?;
-                cmds.push(cmd);
-            }
-            _ => {
-                eprintln!("Each argument must be a table: {:?}", value);
-                return Err(SyntaxError {
-                    message: "Each argument of the exec function must be a table".to_string(),
-                    incomplete_input: false,
-                });
-            }
-        }
-    }
+pub fn run_exec(lua: &Lua, value: Variadic<Value>) -> mlua::Result<()> {
+    let table = to_table(lua, value)?;
+    verify_not_empty(&table)?;
+
+    let cmd_table = normalise_table(lua, table)?;
+    let cmds = generate_cmds(cmd_table)?;
 
     let _ = run_piped(cmds, false)?;
     Ok(())
 }
 
-pub fn run_pipe(_lua: &Lua, table: Table) -> mlua::Result<String> {
-    let mut cmds: Vec<PipelineStep> = vec![];
+pub fn run_pipe(lua: &Lua, value: Variadic<Value>) -> mlua::Result<String> {
+    let table = to_table(lua, value)?;
+    verify_not_empty(&table)?;
+
+    let cmd_table = normalise_table(lua, table)?;
+    let cmds = generate_cmds(cmd_table)?;
+
+    let res = run_piped(cmds, true)?;
+    Ok(res)
+}
+
+fn to_table(lua: &Lua, value: Variadic<Value>) -> mlua::Result<Table> {
+    let mut has_table = false;
+    for v in value.as_slice() {
+        if let Value::Table(_) = v {
+            has_table = true;
+            break;
+        }
+    }
+
+    if !has_table {
+        // That only a variadic of non tables, E.g. os.pipeline('echo', 'hello')
+        let t = lua.create_table()?;
+        let mut idx = 1;
+        for v in value.as_slice() {
+            t.set(idx, v.clone())?;
+            idx += 1;
+        }
+        return Ok(t);
+    }
+
+    // Otherwise, let's iterate in all values and if none is a table, let's put in a table
+    // The result will be a table of tables, being one table per command
+    let root_table = lua.create_table()?;
+    let mut idx = 1;
+    for v in value.as_slice() {
+        match v {
+            Value::Nil => {
+                return Err(SyntaxError {
+                    message: "Nil values are not allowed in pipeline or pipe_exec".to_string(),
+                    incomplete_input: false,
+                });
+            }
+            Value::Table(t) => {
+                root_table.set(idx, t.clone())?;
+                idx += 1;
+            }
+            val => {
+                let t = lua.create_table()?;
+                t.set(1, val.clone())?;
+                root_table.set(idx, t)?;
+                idx += 1;
+            }
+        }
+    }
+    Ok(root_table)
+}
+
+fn verify_not_empty(table: &Table) -> mlua::Result<()> {
+    if table.is_empty() {
+        return Err(SyntaxError {
+            message: "At least one command is required".to_string(),
+            incomplete_input: false,
+        });
+    }
+    Ok(())
+}
+
+fn normalise_table(lua: &Lua, table: Table) -> mlua::Result<Table> {
+    let cmd_table: Table;
+
+    let mut tab_found = false;
     for pair in table.sequence_values::<Value>() {
+        let value = pair?;
+        match value {
+            Value::Table(_) => {
+                tab_found = true;
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    if !tab_found {
+        // It's a single command.
+        cmd_table = lua.create_table()?;
+        cmd_table.set(1, table)?;
+    } else {
+        cmd_table = table;
+    }
+    Ok(cmd_table)
+}
+
+fn generate_cmds(cmd_table: Table) -> mlua::Result<Vec<PipelineStep>> {
+    let mut cmds: Vec<PipelineStep> = vec![];
+    for pair in cmd_table.sequence_values::<Value>() {
         let value = pair?;
         match value {
             Value::Table(t) => {
@@ -139,9 +220,7 @@ pub fn run_pipe(_lua: &Lua, table: Table) -> mlua::Result<String> {
             }
         }
     }
-
-    let res = run_piped(cmds, true)?;
-    Ok(res)
+    Ok(cmds)
 }
 
 fn run_piped(steps: Vec<PipelineStep>, return_output: bool) -> io::Result<String> {
@@ -175,10 +254,10 @@ fn run_piped(steps: Vec<PipelineStep>, return_output: bool) -> io::Result<String
                 } else {
                     command.stdin(Stdio::inherit());
                 }
-                
+
                 command.stdout(Stdio::from(writer));
                 command.stderr(Stdio::inherit());
-                
+
                 let child = command.spawn()?;
                 children.push(child);
             }
@@ -293,5 +372,156 @@ fn run_piped(steps: Vec<PipelineStep>, return_output: bool) -> io::Result<String
             final_output.read_to_end(&mut buffer)?;
         }
         Ok(String::from_utf8(buffer).unwrap())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mlua::{Lua, Value, Variadic};
+
+    #[test]
+    fn test_simple_echo_variadic() {
+        let lua = Lua::new();
+
+        // Test the new variadic API: run_pipe(&lua, "echo", "asd")
+        let values = vec![
+            Value::String(lua.create_string("echo").unwrap()),
+            Value::String(lua.create_string("asd").unwrap()),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        assert_eq!(result.trim(), "asd");
+    }
+
+    #[test]
+    fn test_echo_with_exec_variadic() {
+        let lua = Lua::new();
+
+        // Test run_exec with variadic args
+        let values = vec![
+            Value::String(lua.create_string("echo").unwrap()),
+            Value::String(lua.create_string("asd").unwrap()),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_exec(&lua, variadic);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_echo_pipe_grep_tables() {
+        let lua = Lua::new();
+
+        // Test pipeline with table format: {{"echo", "asd\ntest\nasd again"}, {"grep", "asd"}}
+        let echo_table = lua.create_table().unwrap();
+        echo_table.set(1, "echo").unwrap();
+        echo_table.set(2, "asd\ntest\nasd again").unwrap();
+
+        let grep_table = lua.create_table().unwrap();
+        grep_table.set(1, "grep").unwrap();
+        grep_table.set(2, "asd").unwrap();
+
+        let values = vec![
+            Value::Table(echo_table),
+            Value::Table(grep_table),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        let lines: Vec<&str> = result.trim().split('\n').collect();
+        assert_eq!(lines.len(), 2);
+        assert!(lines[0].contains("asd"));
+        assert!(lines[1].contains("asd"));
+    }
+
+    #[test]
+    fn test_single_table_command() {
+        let lua = Lua::new();
+
+        // Test single table: {{"echo", "test"}}
+        let echo_table = lua.create_table().unwrap();
+        echo_table.set(1, "echo").unwrap();
+        echo_table.set(2, "test").unwrap();
+
+        let values = vec![Value::Table(echo_table)];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        assert_eq!(result.trim(), "test");
+    }
+
+    #[test]
+    fn test_multiple_echo_args() {
+        let lua = Lua::new();
+
+        // Test: run_pipe(&lua, "echo", "hello", "world", "!")
+        let values = vec![
+            Value::String(lua.create_string("echo").unwrap()),
+            Value::String(lua.create_string("hello").unwrap()),
+            Value::String(lua.create_string("world").unwrap()),
+            Value::String(lua.create_string("!").unwrap()),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        assert_eq!(result.trim(), "hello world !");
+    }
+
+    #[test]
+    fn test_numeric_args() {
+        let lua = Lua::new();
+
+        // Test with numeric arguments: "echo", 123, 45.6
+        let values = vec![
+            Value::String(lua.create_string("echo").unwrap()),
+            Value::Integer(123),
+            Value::Number(45.6),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        assert_eq!(result.trim(), "123 45.6");
+    }
+
+    #[test]
+    fn test_error_empty_pipeline() {
+        let lua = Lua::new();
+
+        // Test empty pipeline should return error
+        let values: Vec<Value> = vec![];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_complex_pipeline() {
+        let lua = Lua::new();
+
+        // Test complex pipeline: echo "line1\nline2\nline3" | grep "line" | wc -l
+        let echo_table = lua.create_table().unwrap();
+        echo_table.set(1, "echo").unwrap();
+        echo_table.set(2, "line1\nline2\nline3").unwrap();
+
+        let grep_table = lua.create_table().unwrap();
+        grep_table.set(1, "grep").unwrap();
+        grep_table.set(2, "line").unwrap();
+
+        let wc_table = lua.create_table().unwrap();
+        wc_table.set(1, "wc").unwrap();
+        wc_table.set(2, "-l").unwrap();
+
+        let values = vec![
+            Value::Table(echo_table),
+            Value::Table(grep_table),
+            Value::Table(wc_table),
+        ];
+        let variadic = Variadic::from_iter(values);
+
+        let result = run_pipe(&lua, variadic).unwrap();
+        assert_eq!(result.trim(), "3");
     }
 }

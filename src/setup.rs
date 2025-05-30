@@ -5,6 +5,7 @@ use crate::pipeline_exec::{run_exec, run_pipe};
 use crate::files::{compress, create_zip, decompress, extract_zip};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
 use crate::filesystem::{copy_file, delete_file, file_exists, ls, mkdir, move_file, rmdir};
+use crate::net::wget;
 use crate::os::{os_name, proc_exes, proc_names};
 
 pub(crate) struct LushContext {
@@ -53,6 +54,10 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     files_tb.set("decompress", lua.create_function(decompress)?)?;
     lua.globals().set("files", files_tb)?;
 
+    let net_tb = lua.create_table()?;
+    net_tb.set("wget", lua.create_function(wget)?)?;
+    lua.globals().set("net", net_tb)?;
+    
     Ok(())
 }
 

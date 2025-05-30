@@ -21,6 +21,10 @@ os_pipe = "1.2.1"
 tar = "0.4.44"
 zstd = "0.13.2"
 walkdir = "2.5.0"
+reqwest = { version = "0.12", features = ["blocking"] }
+url = "2.0"
+indicatif = "0.17"
+
 
 [dev-dependencies]
 tempfile = "3"

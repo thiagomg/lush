@@ -1,0 +1,26 @@
+
+function download_pic()
+    local url = "https://media.vanityfair.com/photos/681bbdd38435645ca8f3430a/4:3/w_1700,h_1275,c_limit/0625-ScarlettJohansson-site.jpg"
+
+    local file1 = net.wget(url)
+    local file2 = net.wget(url, 'scarlett.jpg')
+
+    print('file1: ' .. file1)
+    print('file2: ' .. file2)
+end
+
+function in_brackets(x)
+    return '[' .. x .. ']'
+end
+
+local res = os.pipeline('echo', 'hello world1')
+print('res: ' .. res)
+
+local res = os.pipeline({'echo', 'hello world2'})
+print('res: ' .. res)
+
+local res = os.pipeline({'echo', 'hello world3'}, {in_brackets})
+print('res: ' .. res)
+
+local res = os.pipeline({'echo', 'hello world4'}, in_brackets, {'tr', 'a-z', 'A-Z'})
+print('res: ' .. res)

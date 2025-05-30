@@ -104,15 +104,16 @@ function only_errors(x)
     end
 end
 
-os.exec({
+os.pipe_exec({
     {"cat", "/tmp/my-file.log"},
     {in_brackets},
     {"grep", "error"},
 })
 
-os.exec({
+-- If it's a function or a command with no arguments, crurly braces is optional
+os.pipe_exec({
     {"cat", "/tmp/my-file.log"},
-    {in_brackets},
+    in_brackets,
     {only_errors},
 })
 
@@ -150,10 +151,11 @@ function only_errors(x)
     end
 end
 
-local res = os.exec({
+-- If it's a function or a command with no arguments, crurly braces is optional
+local res = os.pipeline({
     {"cat", "/tmp/my-file.log"},
     {in_brackets},
-    {only_errors},
+    only_errors,
 })
 
 print(res)
