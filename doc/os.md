@@ -77,13 +77,14 @@ os.proc_exes()
 
 ---
 
-`os.exec()`
+`os.pipe_exec()`
 
-Executes one or more commands in parallel, piping the result into the next command
+Executes one or more commands in parallel, piping the result into the next command.
+The final result will be written to stdout
 
 Returns:
 
-* Output of the last command in the pipe
+* Nothing
 
 Example:
 
@@ -115,8 +116,46 @@ os.exec({
     {only_errors},
 })
 
--- both return 
+-- both print to stdout 
 -- [error 1 - asd]
 -- [error 2 - asd]
-
 ```
+
+---
+
+`os.pipeline()`
+
+Executes one or more commands in parallel, piping the result into the next command.
+Different than os.pipe_exec, the result is returned 
+
+Returns:
+
+* Output of the last command in the pipe
+
+Example:
+
+```lua
+-- content of ~/my-file.log:
+-- error 1 - asd
+-- this worked ok
+-- error 2 - asd
+
+function in_brackets(x)
+    return '[' .. x .. ']'
+end
+
+function only_errors(x)
+    if string.find(x, 'error') then
+        return x
+    end
+end
+
+local res = os.exec({
+    {"cat", "/tmp/my-file.log"},
+    {in_brackets},
+    {only_errors},
+})
+
+print(res)
+```
+

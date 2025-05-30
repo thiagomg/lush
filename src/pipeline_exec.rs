@@ -98,7 +98,7 @@ fn process_command(t: Table) -> Result<PipelineStep> {
     }
 }
 
-pub fn run_exec(_lua: &Lua, table: Table) -> Result<()> {
+pub fn run_exec(_lua: &Lua, table: Table) -> mlua::Result<()> {
     let mut cmds: Vec<PipelineStep> = vec![];
     for pair in table.sequence_values::<Value>() {
         let value = pair?;
@@ -117,12 +117,34 @@ pub fn run_exec(_lua: &Lua, table: Table) -> Result<()> {
         }
     }
 
-    run_piped(cmds)?;
-
+    let _ = run_piped(cmds, false)?;
     Ok(())
 }
 
-fn run_piped(steps: Vec<PipelineStep>) -> io::Result<()> {
+pub fn run_pipe(_lua: &Lua, table: Table) -> mlua::Result<String> {
+    let mut cmds: Vec<PipelineStep> = vec![];
+    for pair in table.sequence_values::<Value>() {
+        let value = pair?;
+        match value {
+            Value::Table(t) => {
+                let cmd = process_command(t)?;
+                cmds.push(cmd);
+            }
+            _ => {
+                eprintln!("Each argument must be a table: {:?}", value);
+                return Err(SyntaxError {
+                    message: "Each argument of the exec function must be a table".to_string(),
+                    incomplete_input: false,
+                });
+            }
+        }
+    }
+
+    let res = run_piped(cmds, true)?;
+    Ok(res)
+}
+
+fn run_piped(steps: Vec<PipelineStep>, return_output: bool) -> io::Result<String> {
     let mut children: Vec<Child> = vec![];
     let mut threads = vec![];
 
@@ -150,9 +172,13 @@ fn run_piped(steps: Vec<PipelineStep>) -> io::Result<()> {
                 // Use previous output as stdin
                 if let Some(prev_read) = input.take() {
                     command.stdin(Stdio::from(prev_read));
+                } else {
+                    command.stdin(Stdio::inherit());
                 }
-
+                
                 command.stdout(Stdio::from(writer));
+                command.stderr(Stdio::inherit());
+                
                 let child = command.spawn()?;
                 children.push(child);
             }
@@ -227,19 +253,45 @@ fn run_piped(steps: Vec<PipelineStep>) -> io::Result<()> {
         }
     }
 
-    // If the last step wrote to a pipe, forward it to stdout
-    if let Some(mut final_output) = input {
-        io::copy(&mut final_output, &mut io::stdout())?;
-    }
+    if !return_output {
+        // If the last step wrote to a pipe, forward it to stdout with immediate flushing
+        if let Some(mut final_output) = input {
+            let mut buffer = [0; 1024];
+            loop {
+                match final_output.read(&mut buffer) {
+                    Ok(0) => break, // EOF
+                    Ok(n) => {
+                        io::stdout().write_all(&buffer[..n])?;
+                        io::stdout().flush()?; // Immediate flush
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                    Err(e) => return Err(e),
+                }
+            }
+        }
 
-    // Wait for all threads and processes
-    for thread in threads {
-        thread.join().unwrap();
-    }
+        for mut child in children {
+            child.wait()?;
+        }
 
-    for mut child in children {
-        child.wait()?;
-    }
+        for thread in threads {
+            thread.join().unwrap();
+        }
 
-    Ok(())
+        Ok("".to_string())
+    } else {
+        let mut buffer = Vec::new();
+        // Wait for all threads and processes
+        for thread in threads {
+            thread.join().unwrap();
+        }
+
+        for mut child in children {
+            child.wait()?;
+        }
+        if let Some(mut final_output) = input {
+            final_output.read_to_end(&mut buffer)?;
+        }
+        Ok(String::from_utf8(buffer).unwrap())
+    }
 }

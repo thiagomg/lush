@@ -12,15 +12,15 @@ function only_errors(x)
     end
 end
 
-os.exec({
-    {"cat", "/tmp/my-file.log"},
-    {in_brackets},
-    {"grep", "error"},
-})
+--os.pipe_exec({
+--    {"tail", "-f", "/tmp/my-file.log"},
+--    -- {in_brackets},
+--    {"grep", "error"},
+--})
 
-os.exec({
-    {"cat", "/tmp/my-file.log"},
-    {in_brackets},
-    {only_errors},
-})
-
+ x = os.pipe({
+     {"cat", "/tmp/my-file.log"},
+     {in_brackets},
+     {only_errors},
+ })
+ print(x)

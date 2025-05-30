@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use mlua::Lua;
 use mlua::prelude::LuaResult;
-use crate::pipeline_exec::run_exec;
+use crate::pipeline_exec::{run_exec, run_pipe};
 use crate::files::{compress, create_zip, decompress, extract_zip};
 use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
 use crate::filesystem::{copy_file, delete_file, file_exists, ls, mkdir, move_file, rmdir};
@@ -42,7 +42,8 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     os_tb.set("name", lua.create_function(os_name)?)?;
     os_tb.set("proc_names", lua.create_function(proc_names)?)?;
     os_tb.set("proc_exes", lua.create_function(proc_exes)?)?;
-    os_tb.set("exec", lua.create_function(run_exec)?)?;
+    os_tb.set("pipe_exec", lua.create_function(run_exec)?)?;
+    os_tb.set("pipeline", lua.create_function(run_pipe)?)?;
 
     // Compression
     let files_tb = lua.create_table()?;
