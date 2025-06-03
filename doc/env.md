@@ -152,6 +152,7 @@ Prints the provided tokens to the standard output.
 Parameters:
 
 * A variadic number of arguments to print.
+* If the first argument is a string and the second a table, it formats by name or index
 
 Returns:
 
@@ -161,4 +162,5 @@ Example:
 
 ```lua
 env.print("Hello", "World", 123)
+env.print('ten={}, twenty={}, my name={name}', {10, 20, name='Thiago'}) 
 ```

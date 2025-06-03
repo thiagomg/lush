@@ -1,3 +1,6 @@
+0.7.0
+- Added formatting support to env.print
+
 0.6.0
 - renamed os.exec to os.pipe_exec and added os.pipeline
 - Added net.wget

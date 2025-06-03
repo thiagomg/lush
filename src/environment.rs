@@ -1,6 +1,7 @@
 use std::env;
 use mlua::{Lua, Value, Variadic};
 use crate::setup::LushContext;
+use crate::utils::dyn_format::{dynamic_format, FormatArgs};
 
 /// Changes the current working directory and pushes the previous one onto the stack.
 ///
@@ -197,9 +198,17 @@ pub(crate) fn rem_env(_lua: &Lua, name: String) -> mlua::Result<()> {
 /// ```lua
 /// env.print("Hello", "World", 123)
 /// ```
-pub(crate) fn print(_lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
+pub(crate) fn print(lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
     let tab_count = tokens.iter().filter(|x| x.is_table()).count();
-    if tab_count > 0 {
+    if tab_count == 1 && tokens.len() == 2 && tokens[0].is_string() {
+        match (&tokens[0], &tokens[1]) {
+            (Value::String(s), Value::Table(t)) => {
+                let s = interpolate_string(lua, s.to_str()?.to_string().as_str(), t)?;
+                println!("{}", s);
+            }
+            _ => println!("{:#?}", tokens),
+        };
+    } else if tab_count > 0 {
         println!("{:#?}", tokens);    
     } else {
         let res: Vec<String> = tokens.iter().map(|x| x.to_string().unwrap().to_string()).collect();
@@ -208,3 +217,71 @@ pub(crate) fn print(_lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
     Ok(())
 }
 
+fn interpolate_string(_lua: &Lua, format: &str, tokens: &mlua::Table) -> mlua::Result<String> {
+    let mut args = FormatArgs::new();
+    let mut idx = 0;
+    loop {
+        idx += 1;
+        let val: Value = tokens.get(idx)?;
+        if val.is_nil() {
+            break;
+        }
+        
+        let str_val = val.to_string()?.to_string();
+        args = args.add_positional(str_val);
+    }
+    
+    for pair in tokens.pairs::<Value, Value>() {
+        let (key, value) = pair?;
+        match key {
+            Value::String(key) => {
+                let str_key = key.to_str()?.to_string();
+                let str_val = value.to_string()?.to_string(); 
+                args = args.add_named(str_key, str_val);
+            }
+            _ => {}
+        }
+    }
+
+    let s = dynamic_format(format, &args).expect(format!("Error formatting formatting {}", format).as_str());
+    Ok(s)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+    use crate::setup::run_script;
+    use super::*;
+
+    #[test]
+    fn interpolate_test() {
+        let lua = Lua::new();
+
+        let args = lua.create_table().unwrap();
+        args.set(1, "Não").unwrap();
+        args.set("nome", "nego").unwrap();
+
+        let ret = interpolate_string(&lua, "e foi {nome} mesmo? {1}", &args).unwrap();
+        assert_eq!(ret, "e foi nego mesmo? Não");
+    }
+    
+    #[test]
+    fn happy_case_2() {
+        run_script(r#"
+            local args = {10, 20, name='Thiago'}
+            env.print('a={}, b={}, nome={name}', args) 
+            "#, 
+            PathBuf::from("script.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn happy_case_3() {
+        run_script(r#"
+            local args = {[1] = 1, [2] = 10, [3] = 20, name='Thiago'}
+            env.print('a={2}, b={3}, nome={name}', args) 
+            "#,
+            PathBuf::from("script.lua"), vec![]).unwrap();
+    }
+
+
+}

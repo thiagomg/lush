@@ -9,6 +9,7 @@ mod string_utils;
 mod pipeline_exec;
 mod compress;
 mod net;
+mod utils;
 
 use std::fs;
 use std::path::PathBuf;
@@ -28,7 +29,8 @@ fn main() -> Result<(), String> {
 }
 
 fn run_file(input_file: PathBuf, args: Vec<String>) -> Result<(), String> {
-    let script = fs::read_to_string(input_file.clone()).expect("Error opening input file");
+    let script = fs::read_to_string(input_file.clone())
+        .expect(format!("Error opening input file {}", input_file.display()).as_str());
     let script = remove_shebang(script);
     let res = run_script(&script, input_file.clone(), args);
     if let Err(e) = res {
