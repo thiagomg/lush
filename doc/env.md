@@ -3,6 +3,25 @@
 These functions are part of the global environment (`env`) in Lua, providing utilities for directory management,
 environment variables, and output printing.
 
+---
+
+`env.cwd()`
+
+Retrieves the current directory
+
+Returns:
+
+* The current directory or nil if not available
+
+Example:
+
+```lua
+env.print(env.cwd())
+/Users/myself/src/lush
+```
+
+---
+
 `env.pushd(new_dir)`
 
 Changes the current working directory and pushes the previous one onto the stack.

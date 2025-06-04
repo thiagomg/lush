@@ -248,6 +248,24 @@ pub(crate) fn delete_file(_lua: &Lua, (path, options): (String, Option<Table>)) 
     }
 }
 
+pub(crate) fn is_dir(_lua: &Lua, path: String) -> mlua::Result<bool> {
+    let path = PathBuf::from(&path);
+    Ok(path.is_dir())
+}
+
+pub(crate) fn is_file(_lua: &Lua, path: String) -> mlua::Result<bool> {
+    let path = PathBuf::from(&path);
+    Ok(path.is_dir())
+}
+
+pub(crate) fn parent(_lua: &Lua, path: String) -> mlua::Result<Option<String>> {
+    let path = match PathBuf::from(&path).parent() {
+        None => None,
+        Some(x) => Some(x.to_str().unwrap().to_string()),
+    };
+    Ok(path)
+}
+
 fn delete_recursively<P: AsRef<Path>>(path: P, recursive: bool) -> io::Result<bool> {
     let path = path.as_ref();
     if path.is_dir() {

@@ -10,6 +10,7 @@ mod pipeline_exec;
 mod compress;
 mod net;
 mod utils;
+mod toml;
 
 use std::fs;
 use std::path::PathBuf;

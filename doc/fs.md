@@ -154,3 +154,66 @@ Example:
 local exists = fs.exists("/path/to/file")
 print(exists)
 ```
+
+---
+
+`fs.is_dir(src)`
+
+Checks if a path is a directory
+
+Parameters:
+
+* src (string) - The path to check.
+
+Returns:
+
+* `true` if the path is a directory, `false` otherwise.
+
+Example:
+
+```lua
+local res = fs.is_dir("/path/to/my-dir")
+print(res)
+```
+
+---
+
+`fs.is_file(src)`
+
+Checks if a path is a file
+
+Parameters:
+
+* src (string) - The path to check.
+
+Returns:
+
+* `true` if the path is a file, `false` otherwise.
+
+Example:
+
+```lua
+local res = fs.is_file("/path/to/my-file")
+print(res)
+```
+
+---
+
+`fs.parent(src)`
+
+Retrieves the parent path of a given path
+
+Parameters:
+
+* src (string) - The path to check.
+
+Returns:
+
+* Parent path of given path or Nil if not available
+
+Example:
+
+```lua
+local parent_dir = fs.parent("/path/to/my-dir")
+print(parent_dir) -- prints /path/to
+```

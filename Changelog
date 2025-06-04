@@ -1,3 +1,6 @@
+0.8.0
+- Added toml module, env.cwd, fs.is_dir, fs.is_file and fs.parent
+
 0.7.0
 - Added formatting support to env.print
 

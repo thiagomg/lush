@@ -247,6 +247,14 @@ fn interpolate_string(_lua: &Lua, format: &str, tokens: &mlua::Table) -> mlua::R
     Ok(s)
 }
 
+pub(crate) fn cwd(_lua: &Lua, _: ()) -> mlua::Result<Option<String>> {
+    let cur_dir = match env::current_dir() {
+        Ok(d) => Some(d.to_str().unwrap().to_string()),
+        Err(_e) => None,
+    };
+    Ok(cur_dir)
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;

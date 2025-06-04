@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 use mlua::Lua;
 use mlua::prelude::LuaResult;
-use crate::pipeline_exec::{run_exec, run_pipe};
-use crate::files::{compress, create_zip, decompress, extract_zip};
-use crate::environment::{chdir, get_env, popd, print, pushd, pwd, rem_env, set_env};
-use crate::filesystem::{copy_file, delete_file, file_exists, ls, mkdir, move_file, rmdir};
-use crate::net::wget;
-use crate::os::{os_name, proc_exes, proc_names};
+use crate::pipeline_exec::*;
+use crate::files::*;
+use crate::environment::*;
+use crate::filesystem::*;
+use crate::net::*;
+use crate::os::*;
+use crate::toml::*;
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
@@ -25,6 +26,7 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     env_tb.set("set", lua.create_function(set_env)?)?;
     env_tb.set("del", lua.create_function(rem_env)?)?;
     env_tb.set("print", lua.create_function(print)?)?;
+    env_tb.set("cwd", lua.create_function(cwd)?)?;
     lua.globals().set("env", env_tb)?;
 
     // File System
@@ -36,6 +38,9 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     filesystem_tb.set("move", lua.create_function(move_file)?)?;
     filesystem_tb.set("rm", lua.create_function(delete_file)?)?;
     filesystem_tb.set("exists", lua.create_function(file_exists)?)?;
+    filesystem_tb.set("is_dir", lua.create_function(is_dir)?)?;
+    filesystem_tb.set("is_file", lua.create_function(is_file)?)?;
+    filesystem_tb.set("parent", lua.create_function(parent)?)?;
     lua.globals().set("fs", filesystem_tb)?;
 
     // Operating System
@@ -57,7 +62,12 @@ fn set_utils(lua: &Lua) -> LuaResult<()> {
     let net_tb = lua.create_table()?;
     net_tb.set("wget", lua.create_function(wget)?)?;
     lua.globals().set("net", net_tb)?;
-    
+
+    let toml_tb = lua.create_table()?;
+    toml_tb.set("load_file", lua.create_function(load_file)?)?;
+    toml_tb.set("save_file", lua.create_function(save_file)?)?;
+    lua.globals().set("toml", toml_tb)?;
+
     Ok(())
 }
 
