@@ -138,11 +138,11 @@ fs.rm("/some/directory", { recursive = true })
 
 `fs.exists(src)`
 
-Checks if a file exists at the specified path.
+Checks if a file or a directory exist at the specified path.
 
 Parameters:
 
-* src (string) - The file path to check.
+* src (string) - The path to check.
 
 Returns:
 
