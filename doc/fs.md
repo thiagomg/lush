@@ -60,7 +60,7 @@ Parameters:
 
 Returns:
 
-* Nothing.
+* bool: true if directory was deleted
 
 Example:
 

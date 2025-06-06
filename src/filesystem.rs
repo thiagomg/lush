@@ -95,7 +95,7 @@ pub(crate) fn mkdir(_lua: &Lua, path: String) -> mlua::Result<()> {
 /// ```lua
 /// fs.rmdir("/some/directory", { recursive = true })
 /// ```
-pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlua::Result<()> {
+pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlua::Result<bool> {
     let md = fs::metadata(&path)?;
     if !md.is_dir() {
         return Err(io::Error::new(ErrorKind::InvalidInput, "Path is not a directory").into());
@@ -108,15 +108,15 @@ pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlu
         }
     }
 
-    if rec {
+    let res = if rec {
         // println!("Deleting recursively");
-        fs::remove_dir_all(PathBuf::from(&path))?;
+        fs::remove_dir_all(PathBuf::from(&path))
     } else {
         // println!("Deleting directory");
-        fs::remove_dir(PathBuf::from(&path))?;
-    }
+        fs::remove_dir(PathBuf::from(&path))
+    };
 
-    Ok(())
+    Ok(res.is_ok())
 }
 
 /// Copies a file from the source path to the target path.

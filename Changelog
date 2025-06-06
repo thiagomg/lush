@@ -1,3 +1,8 @@
+0.9.0
+- Printing line number and file name when errors are found
+- fs.rmdir does not fail if dir does not exist.
+- Simple repl added
+
 0.8.0
 - Added toml module, env.cwd, fs.is_dir, fs.is_file and fs.parent
 

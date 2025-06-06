@@ -15,7 +15,7 @@ pub(crate) struct LushContext {
 
 // TODO: Creation of temporary dir (e.g. mktemp)
 
-fn set_utils(lua: &Lua) -> LuaResult<()> {
+pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
     let env_tb = lua.create_table()?;
     env_tb.set("cd", lua.create_function(chdir)?)?;
@@ -79,7 +79,8 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
     lua.set_app_data(ctx);
     set_utils(&lua)?;
 
-    let mut full_args = vec![input_file.to_str().unwrap().to_string()];
+    let script_file_name = input_file.to_str().unwrap().to_string();
+    let mut full_args = vec![script_file_name.clone()];
     full_args.extend(args);
 
     // Build the Lua `arg` table
@@ -92,9 +93,7 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
     let add_path = format!(r#"package.path = "{}/?.lua;{}/?.lush;" .. package.path"#, script_dir, script_dir);
     lua.load(&add_path).exec()?;
 
-    lua.load(script).exec()?;
-
-    Ok(())
+    lua.load(script).set_name(script_file_name).exec()
 }
 
 #[cfg(test)]

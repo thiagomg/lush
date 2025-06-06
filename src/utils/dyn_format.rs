@@ -5,7 +5,6 @@ use std::fmt::{self, Display, Write};
 pub enum FormatError {
     InvalidPlaceholder(String),
     MissingArgument(String),
-    TooManyArguments,
     WriteError(fmt::Error),
 }
 
@@ -14,7 +13,6 @@ impl Display for FormatError {
         match self {
             FormatError::InvalidPlaceholder(s) => write!(f, "Invalid placeholder: {}", s),
             FormatError::MissingArgument(s) => write!(f, "Missing argument: {}", s),
-            FormatError::TooManyArguments => write!(f, "Too many arguments provided"),
             FormatError::WriteError(e) => write!(f, "Write error: {}", e),
         }
     }
