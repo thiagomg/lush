@@ -1,9 +1,11 @@
 use mlua::{Lua, Value, Result};
-use rustyline::DefaultEditor;
+use rustyline::{ColorMode, Config, DefaultEditor, Editor};
 use crate::setup;
 use crate::setup::LushContext;
 
 use colored::Colorize;
+use rustyline::history::DefaultHistory;
+use crate::lush_highlighter::LushHighlighter;
 
 pub fn run_repl() -> Result<()> {
     let lua = Lua::new();
@@ -12,12 +14,22 @@ pub fn run_repl() -> Result<()> {
     };
     lua.set_app_data(ctx);
     setup::set_utils(&lua)?;
-    let mut rl = DefaultEditor::new().expect("Could not create line editor");
 
-    println!("LuSH REPL. Press Ctrl+D or type `exit` to quit.");
+    let config = Config::builder()
+        .color_mode(ColorMode::Enabled)
+        .check_cursor_position(true)
+        .build();
+
+    let mut rl = Editor::<LushHighlighter, DefaultHistory>::with_config(config)
+        .expect("Could not create RL environment");
+    rl.set_helper(Some(LushHighlighter::default()));
+
+    println!("{}. Press {} or type `{}` to quit.", "LuSH REPL".bold(), "Ctrl+D".bold(), "exit".bold());
 
     loop {
-        let readline = rl.readline("lush> ");
+        // let prompt = "lush> ".green().to_string();
+        let prompt = "lush> ";
+        let readline = rl.readline(&prompt);
         match readline {
             Ok(line) => {
                 let trimmed = line.trim();

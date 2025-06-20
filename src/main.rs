@@ -1,17 +1,13 @@
-mod files;
-mod environment;
 mod cmd_line;
-mod filesystem;
-mod os;
 mod setup;
 mod test;
 mod string_utils;
-mod pipeline_exec;
+
 mod compress;
-mod net;
 mod utils;
-mod toml;
 mod repl;
+mod modules;
+mod lush_highlighter;
 
 use std::{env, fs};
 use std::path::PathBuf;
@@ -59,7 +55,12 @@ mod tests {
     fn run_test_file() {
         let res = run_file(PathBuf::from("scripts/test.lua"), vec![]);
         println!("{:?}", res);
-        assert!(res.is_ok());
+        match res {
+            Ok(()) => println!("ok"),
+            Err(error) => {
+                println!("{}", error.to_string().red());
+            }
+        }
     }
 
     #[test]

@@ -1,19 +1,22 @@
 use std::path::PathBuf;
 use mlua::Lua;
 use mlua::prelude::LuaResult;
-use crate::pipeline_exec::*;
-use crate::files::*;
-use crate::environment::*;
-use crate::filesystem::*;
-use crate::net::*;
-use crate::os::*;
-use crate::toml::*;
+use crate::modules::pipeline_exec::*;
+use crate::modules::files::*;
+use crate::modules::environment::*;
+use crate::modules::filesystem::*;
+use crate::modules::net::*;
+use crate::modules::os::*;
+use crate::modules::path::*;
+use crate::modules::toml::*;
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
 }
 
 // TODO: Creation of temporary dir (e.g. mktemp)
+
+
 
 pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
@@ -67,6 +70,10 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     toml_tb.set("load_file", lua.create_function(load_file)?)?;
     toml_tb.set("save_file", lua.create_function(save_file)?)?;
     lua.globals().set("toml", toml_tb)?;
+
+    let path_tb = lua.create_table()?;
+    path_tb.set("join", lua.create_function(path_join)?)?;
+    lua.globals().set("path", path_tb)?;
 
     Ok(())
 }
