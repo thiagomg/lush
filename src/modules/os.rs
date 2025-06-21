@@ -1,6 +1,9 @@
-use std::env;
+use std::{env, path::PathBuf};
 use mlua::{Lua, Table};
 use sysinfo::System;
+use tempfile::tempdir;
+
+use crate::TEMP_PATHS;
 
 /// Returns the name of the operating system the program is running on.
 ///
@@ -89,4 +92,12 @@ pub(crate) fn proc_exes(lua: &Lua, _: ()) -> mlua::Result<Table> {
     }
 
     Ok(tb)
+}
+
+pub(crate) fn mkdtemp(_lua: &Lua, _: ()) -> mlua::Result<String> {
+    let dir_path: PathBuf = tempdir()?.keep();
+
+    TEMP_PATHS.lock().unwrap().push(dir_path.clone());
+
+    Ok(dir_path.to_str().unwrap_or("").to_string())
 }

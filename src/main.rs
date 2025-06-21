@@ -11,6 +11,7 @@ mod lush_highlighter;
 
 use std::{env, fs};
 use std::path::PathBuf;
+use std::sync::Mutex;
 use clap::Parser;
 use colored::Colorize;
 use crate::cmd_line::Args;
@@ -18,6 +19,9 @@ use crate::repl::run_repl;
 use crate::setup::run_script;
 use crate::string_utils::remove_shebang;
 
+use once_cell::sync::Lazy;
+
+pub static TEMP_PATHS: Lazy<Mutex<Vec<PathBuf>>> = Lazy::new(|| Mutex::new(vec![]));
 
 fn main() {
     let cmd_line_args = env::args().skip(1).collect::<Vec<_>>();
@@ -44,7 +48,18 @@ fn run_file(input_file: PathBuf, args: Vec<String>) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone())
         .unwrap_or_else(|_| panic!("Error opening input file {}", input_file.display()));
     let script = remove_shebang(script);
-    run_script(&script, input_file.clone(), args).map_err(|error| error.to_string())
+    let res = run_script(&script, input_file.clone(), args).map_err(|error| error.to_string());
+
+    let paths = TEMP_PATHS.lock().unwrap();
+    for path in paths.iter() {
+        if path.is_file() {
+            let _ = fs::remove_file(path);
+        } else if path.is_dir() {
+            let _ = fs::remove_dir_all(path);
+        }
+    }
+    
+    res
 }
 
 #[cfg(test)]
@@ -66,6 +81,12 @@ mod tests {
     #[test]
     fn test_run_pipeline() {
         let res = run_file(PathBuf::from("scripts/pipetest.lua"), vec![]);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_run_2() {
+        let res = run_file(PathBuf::from("scripts/test2.lush"), vec![]);
         assert!(res.is_ok());
     }
 }

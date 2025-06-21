@@ -17,10 +17,6 @@ pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
 }
 
-// TODO: Creation of temporary dir (e.g. mktemp)
-
-
-
 pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     // Env
     let env_tb = lua.create_table()?;
@@ -47,6 +43,8 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     filesystem_tb.set("is_dir", lua.create_function(is_dir)?)?;
     filesystem_tb.set("is_file", lua.create_function(is_file)?)?;
     filesystem_tb.set("parent", lua.create_function(parent)?)?;
+    filesystem_tb.set("read_file", lua.create_function(read_file)?)?;
+    filesystem_tb.set("write_file", lua.create_function(write_file)?)?;
     lua.globals().set("fs", filesystem_tb)?;
 
     // Operating System
@@ -56,6 +54,7 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     os_tb.set("proc_exes", lua.create_function(proc_exes)?)?;
     os_tb.set("pipe_exec", lua.create_function(run_exec)?)?;
     os_tb.set("pipeline", lua.create_function(run_pipe)?)?;
+    os_tb.set("mkdtemp", lua.create_function(mkdtemp)?)?;
 
     // Compression
     let files_tb = lua.create_table()?;

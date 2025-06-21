@@ -217,3 +217,46 @@ Example:
 local parent_dir = fs.parent("/path/to/my-dir")
 print(parent_dir) -- prints /path/to
 ```
+
+---
+
+`fs.read_file(file_path)`
+
+Reads a file from the given path and returns the content as string
+
+Parameters:
+
+* file_path (string) - Path of the file to be read
+
+Returns:
+
+* content as string or nil if the file does not exist
+
+Example:
+
+```lua
+local content = fs.read_file('/tmp/my-file.txt')
+env.print(content)
+```
+
+---
+
+`fs.write_file(file_path, content)`
+
+Writes a given content to a file in file_path
+
+Parameters:
+
+* file_path (string) - Path of the file to be read
+* content (string) - Content to be written to the file
+
+Returns:
+
+* true if succeeded to write or false if not
+
+Example:
+
+```lua
+local ok = fs.write_file(dir_name .. '/test2.json', "test content")
+env.print(ok)
+```

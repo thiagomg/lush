@@ -96,7 +96,10 @@ pub(crate) fn mkdir(_lua: &Lua, path: String) -> mlua::Result<()> {
 /// fs.rmdir("/some/directory", { recursive = true })
 /// ```
 pub(crate) fn rmdir(_lua: &Lua, (path, options): (String, Option<Table>)) -> mlua::Result<bool> {
-    let md = fs::metadata(&path)?;
+    let md = match fs::metadata(&path) {
+        Ok(x) => x,
+        Err(_) => return Ok(false),
+    };
     if !md.is_dir() {
         return Err(io::Error::new(ErrorKind::InvalidInput, "Path is not a directory").into());
     }
@@ -278,4 +281,18 @@ fn delete_recursively<P: AsRef<Path>>(path: P, recursive: bool) -> io::Result<bo
         return Ok(false);
     }
     Ok(true)
+}
+
+pub(crate) fn read_file(lua: &Lua, path: String) -> mlua::Result<Value> {
+    let s: Value = match fs::read_to_string(path) {
+        Ok(s) => Value::String(lua.create_string(s.as_str())?),
+        Err(_) => mlua::Value::Nil,
+    };
+
+    Ok(s)
+}
+
+pub(crate) fn write_file(_lua: &Lua, (path, value): (String, String)) -> mlua::Result<bool> {
+    let res = fs::write(path, value);
+    Ok(res.is_ok())
 }

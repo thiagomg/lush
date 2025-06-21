@@ -161,3 +161,25 @@ local res = os.pipeline({
 print(res)
 ```
 
+---
+
+`os.mkdtemp()`
+
+Creates a temp directory and returns the path. The directory will be deleted when the 
+script execution is complete
+
+Returns:
+
+* Path of the temporary directory
+
+Example:
+
+```lua
+local dir_name = os.mkdtemp()
+print('temp dir_name: ' .. dir_name)
+json.save_file(dir_name .. '/test.json', {name = 'Scarlett Johansson', age = 38, occupation = 'Actress'})
+local j = json.load_file(dir_name .. '/test.json')
+env.print(j)
+-- Nice! I don't need to worry about removing the temp directory
+```
+

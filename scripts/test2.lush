@@ -24,3 +24,19 @@ print('res: ' .. res)
 
 local res = os.pipeline({'echo', 'hello world4'}, in_brackets, {'tr', 'a-z', 'A-Z'})
 print('res: ' .. res)
+
+local dir_name = os.mkdtemp()
+local file_name = dir_name .. '/test.json'
+
+print('dir_name: ' .. dir_name)
+
+json.save_file(file_name, {name = 'Scarlett Johansson', age = 38, occupation = 'Actress'})
+
+local json_cont = fs.read_file(file_name)
+env.print(json_cont)
+
+local json_cont = fs.write_file(dir_name .. '/test2.json', "test content")
+env.print(json_cont)
+print(fs.read_file(dir_name .. '/test2.json'))
+print(fs.read_file(dir_name .. '/test3.json'))
+
