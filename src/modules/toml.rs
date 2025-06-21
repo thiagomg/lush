@@ -2,8 +2,8 @@ use std::fs;
 use mlua::Lua;
 
 pub(crate) fn load_file(lua: &Lua, path: String) -> mlua::Result<mlua::Value> {
-    let content = fs::read_to_string(path).map_err(|e| mlua::Error::external(e))?;
-    let parsed: toml::Value = toml::from_str(&content).map_err(|e| mlua::Error::external(e))?;
+    let content = fs::read_to_string(path).map_err(mlua::Error::external)?;
+    let parsed: toml::Value = toml::from_str(&content).map_err(mlua::Error::external)?;
     convert_toml_to_lua(lua, parsed)
 }
 
@@ -21,7 +21,7 @@ fn convert_toml_to_lua(lua: &Lua, value: toml::Value) -> mlua::Result<mlua::Valu
         toml::Value::Integer(i) => Ok(mlua::Value::Integer(i)),
         toml::Value::Float(f) => Ok(mlua::Value::Number(f)),
         toml::Value::Boolean(b) => Ok(mlua::Value::Boolean(b)),
-        toml::Value::Datetime(dt) => Ok(mlua::Value::String(lua.create_string(&dt.to_string())?)),
+        toml::Value::Datetime(dt) => Ok(mlua::Value::String(lua.create_string(dt.to_string())?)),
         toml::Value::Array(arr) => {
             let lua_table = lua.create_table()?;
             for (i, item) in arr.into_iter().enumerate() {

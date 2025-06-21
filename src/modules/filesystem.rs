@@ -259,10 +259,8 @@ pub(crate) fn is_file(_lua: &Lua, path: String) -> mlua::Result<bool> {
 }
 
 pub(crate) fn parent(_lua: &Lua, path: String) -> mlua::Result<Option<String>> {
-    let path = match PathBuf::from(&path).parent() {
-        None => None,
-        Some(x) => Some(x.to_str().unwrap().to_string()),
-    };
+    let path = PathBuf::from(&path).parent()
+        .map(|x| x.to_str().unwrap().to_string());
     Ok(path)
 }
 

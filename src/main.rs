@@ -42,7 +42,7 @@ fn main() {
 
 fn run_file(input_file: PathBuf, args: Vec<String>) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone())
-        .expect(format!("Error opening input file {}", input_file.display()).as_str());
+        .unwrap_or_else(|_| panic!("Error opening input file {}", input_file.display()));
     let script = remove_shebang(script);
     run_script(&script, input_file.clone(), args).map_err(|error| error.to_string())
 }

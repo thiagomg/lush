@@ -233,17 +233,14 @@ fn interpolate_string(_lua: &Lua, format: &str, tokens: &mlua::Table) -> mlua::R
     
     for pair in tokens.pairs::<Value, Value>() {
         let (key, value) = pair?;
-        match key {
-            Value::String(key) => {
-                let str_key = key.to_str()?.to_string();
-                let str_val = value.to_string()?.to_string(); 
-                args = args.add_named(str_key, str_val);
-            }
-            _ => {}
+        if let Value::String(key) = key {
+            let str_key = key.to_str()?.to_string();
+            let str_val = value.to_string()?.to_string(); 
+            args = args.add_named(str_key, str_val);
         }
     }
 
-    let s = dynamic_format(format, &args).expect(format!("Error formatting formatting {}", format).as_str());
+    let s = dynamic_format(format, &args).unwrap_or_else(|_| panic!("Error formatting formatting {}", format));
     Ok(s)
 }
 

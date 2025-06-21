@@ -1,4 +1,4 @@
-use rustyline::highlight::{CmdKind, Highlighter};
+use rustyline::highlight::Highlighter;
 use rustyline::Helper;
 use rustyline::hint::Hinter;
 use rustyline::validate::{ValidationContext, ValidationResult, Validator};

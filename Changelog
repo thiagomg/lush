@@ -1,3 +1,6 @@
+0.10.0
+- Added support for json loading and saving
+
 0.9.1
 - Moved some files to a module
 - Added simple highlighter

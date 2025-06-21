@@ -1,5 +1,5 @@
 use mlua::{Lua, Value, Result};
-use rustyline::{ColorMode, Config, DefaultEditor, Editor};
+use rustyline::{ColorMode, Config, Editor};
 use crate::setup;
 use crate::setup::LushContext;
 
@@ -22,14 +22,14 @@ pub fn run_repl() -> Result<()> {
 
     let mut rl = Editor::<LushHighlighter, DefaultHistory>::with_config(config)
         .expect("Could not create RL environment");
-    rl.set_helper(Some(LushHighlighter::default()));
+    rl.set_helper(Some(LushHighlighter));
 
     println!("{}. Press {} or type `{}` to quit.", "LuSH REPL".bold(), "Ctrl+D".bold(), "exit".bold());
 
     loop {
         // let prompt = "lush> ".green().to_string();
         let prompt = "lush> ";
-        let readline = rl.readline(&prompt);
+        let readline = rl.readline(prompt);
         match readline {
             Ok(line) => {
                 let trimmed = line.trim();

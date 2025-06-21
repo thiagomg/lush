@@ -183,12 +183,9 @@ fn normalise_table(lua: &Lua, table: Table) -> mlua::Result<Table> {
     let mut tab_found = false;
     for pair in table.sequence_values::<Value>() {
         let value = pair?;
-        match value {
-            Value::Table(_) => {
-                tab_found = true;
-                break;
-            }
-            _ => {}
+        if let Value::Table(_) = value {
+            tab_found = true;
+            break;
         }
     }
 

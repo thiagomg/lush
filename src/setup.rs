@@ -8,7 +8,10 @@ use crate::modules::filesystem::*;
 use crate::modules::net::*;
 use crate::modules::os::*;
 use crate::modules::path::*;
-use crate::modules::toml::*;
+use crate::modules::toml::load_file as load_toml;
+use crate::modules::toml::save_file as save_toml;
+use crate::modules::json::load_file as load_json;
+use crate::modules::json::save_file as save_json;
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
@@ -67,9 +70,14 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     lua.globals().set("net", net_tb)?;
 
     let toml_tb = lua.create_table()?;
-    toml_tb.set("load_file", lua.create_function(load_file)?)?;
-    toml_tb.set("save_file", lua.create_function(save_file)?)?;
+    toml_tb.set("load_file", lua.create_function(load_toml)?)?;
+    toml_tb.set("save_file", lua.create_function(save_toml)?)?;
     lua.globals().set("toml", toml_tb)?;
+
+    let json_tb = lua.create_table()?;
+    json_tb.set("load_file", lua.create_function(load_json)?)?;
+    json_tb.set("save_file", lua.create_function(save_json)?)?;
+    lua.globals().set("json", json_tb)?;
 
     let path_tb = lua.create_table()?;
     path_tb.set("join", lua.create_function(path_join)?)?;

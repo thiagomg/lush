@@ -60,7 +60,7 @@ pub fn dynamic_format(pattern: &str, args: &FormatArgs) -> Result<String, Format
                 let mut placeholder = String::new();
                 let mut found_closing = false;
 
-                while let Some(inner_ch) = chars.next() {
+                for inner_ch in chars.by_ref() {
                     if inner_ch == '}' {
                         found_closing = true;
                         break;
