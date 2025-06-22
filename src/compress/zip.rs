@@ -2,7 +2,10 @@ use std::fs::{File, metadata};
 use std::{fs, io};
 use std::io::{Read, Write};
 use std::os::unix::fs::PermissionsExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
+use chrono::{Local, NaiveDateTime, TimeZone};
+use filetime::{set_file_mtime, FileTime};
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
 use zip::result::ZipResult;
@@ -87,8 +90,8 @@ fn zip_list(src_files: &[PathBuf], writer: &mut ZipWriter<File>, buffer: &mut Ve
 ///
 /// * A `ZipResult` indicating success or an error if the extraction fails.
 pub(crate) fn extract_zip_int(path: PathBuf, output_dir: PathBuf) -> ZipResult<()> {
-    let file = File::open(&path)?;
-    let mut archive = ZipArchive::new(file)?;
+    let zip_file = File::open(&path)?;
+    let mut archive = ZipArchive::new(zip_file)?;
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
@@ -104,8 +107,43 @@ pub(crate) fn extract_zip_int(path: PathBuf, output_dir: PathBuf) -> ZipResult<(
             }
             let mut outfile = File::create(&out_path)?;
             std::io::copy(&mut file, &mut outfile)?;
+            drop(outfile);
+        }
+
+        // Restore permissions (if available)
+        #[cfg(unix)]
+        if let Some(mode) = file.unix_mode() {
+            set_permissions(&out_path, mode)?;
+        }
+
+        if let Some(last_mod) = file.last_modified() {
+            if let Ok(dt) = NaiveDateTime::try_from(last_mod) {
+                let _ = set_mtime_from_local_naive(&out_path, dt);
+            }
+
         }
     }
 
+
     Ok(())
+}
+
+fn set_mtime_from_local_naive(path: &Path, naive: NaiveDateTime) -> std::io::Result<()> {
+    // Interpret NaiveDateTime as local time
+    let local_dt = Local.from_local_datetime(&naive)
+        .single()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Ambiguous or nonexistent local time"))?;
+
+    // Convert to SystemTime
+    let system_time: SystemTime = local_dt.into();
+
+    // Convert to FileTime and set mtime
+    let file_time = FileTime::from_system_time(system_time);
+    set_file_mtime(path, file_time)
+}
+
+#[cfg(unix)]
+fn set_permissions(path: &PathBuf, mode: u32) -> io::Result<()> {
+    use std::fs::Permissions;
+    fs::set_permissions(path, Permissions::from_mode(mode))
 }
