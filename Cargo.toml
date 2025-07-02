@@ -1,7 +1,7 @@
 [package]
 name = "lush"
 description = "LuSH is a lua for shell scripts - embedded in a single binary, easy to share, to run everywhere"
-version = "0.11.1"
+version = "0.12.0"
 edition = "2024"
 authors = ["Thiago Massari Guedes"]
 license = "Apache-2.0"
@@ -9,10 +9,10 @@ homepage = "https://thiagocafe.com"
 repository = "https://github.com/thiagomg/lush"
 
 [dependencies]
-mlua = { version = "0.11.0-beta.2", features = ["vendored", "lua54", "send", "serialize"] }
-zip = { version = "4.1.0", features = ["deflate", "chrono"] }
-anyhow = "1.0.89"
-whoami = "1.5.2"
+mlua = { version = "0.11.0-beta.3", features = ["vendored", "lua54", "send", "serialize"] }
+zip = { version = "4", features = ["deflate", "chrono"] }
+anyhow = "1.0"
+whoami = "1.6.0"
 clap = { version = "4", features = ["derive"] }
 regex = "1.11.0"
 colored = "3"
@@ -22,9 +22,9 @@ tar = "0.4.44"
 zstd = "0.13.2"
 walkdir = "2.5.0"
 reqwest = { version = "0.12", features = ["blocking"] }
-url = "2.0"
+url = "2"
 indicatif = "0.17"
-toml = "0.8.22"
+toml = "0.8.23"
 rustyline = "16.0.0"
 serde_json = "1.0.140"
 tempfile = "3"

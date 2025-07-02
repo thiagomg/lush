@@ -8,6 +8,7 @@ mod utils;
 mod repl;
 mod modules;
 mod lush_highlighter;
+mod preprocessor;
 
 use std::{env, fs};
 use std::path::PathBuf;

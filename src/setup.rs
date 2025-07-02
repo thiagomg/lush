@@ -12,6 +12,7 @@ use crate::modules::toml::load_file as load_toml;
 use crate::modules::toml::save_file as save_toml;
 use crate::modules::json::load_file as load_json;
 use crate::modules::json::save_file as save_json;
+use crate::preprocessor::interpolate_strings;
 
 pub(crate) struct LushContext {
     pub dir_stack: Vec<PathBuf>,
@@ -107,6 +108,9 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
     let add_path = format!(r#"package.path = "{}/?.lua;{}/?.lush;" .. package.path"#, script_dir, script_dir);
     lua.load(&add_path).exec()?;
 
+    // Before loading the script, let's run through pre-processors
+    let script = interpolate_strings(script);
+    
     lua.load(script).set_name(script_file_name).exec()
 }
 
