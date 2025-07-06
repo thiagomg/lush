@@ -208,6 +208,8 @@ pub(crate) fn print(lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
             }
             _ => println!("{:#?}", tokens),
         };
+    } else if tab_count == 1 && is_array(&tokens) {
+        print_array(&tokens)
     } else if tab_count > 0 {
         println!("{:#?}", tokens);    
     } else {
@@ -215,6 +217,51 @@ pub(crate) fn print(lua: &Lua, tokens: Variadic<Value>) -> mlua::Result<()> {
         println!("{}", res.join(" "));
     }
     Ok(())
+}
+
+fn print_array(tokens: &Variadic<Value>) {
+    if tokens.len() != 1 {
+        return;
+    }
+
+    let item = tokens.get(0).unwrap();
+    if let Value::Table(t) = item {
+        let mut exp_idx = 1;
+        print!("{}", "{");
+        loop {
+            let val = match t.get::<Value>(exp_idx) {
+                Ok(val) if val.is_nil() => break,
+                Ok(val) => val,
+                Err(_) => break,
+            };
+            if exp_idx == 1 {
+                print!("{}", val.to_string().unwrap());
+            } else {
+                print!(", {}", val.to_string().unwrap());
+            }
+            exp_idx += 1;
+        }
+        println!("{}", "}");
+    }
+}
+
+fn is_array(tokens: &Variadic<Value>) -> bool {
+    if tokens.len() != 1 {
+        return false;
+    }
+
+    let item = tokens.get(0).unwrap();
+    if let Value::Table(t) = item {
+        let max = t.pairs::<Value, Value>().count() + 1;
+        for i in 1..max {
+            let val: Result<Value, _> = t.get(i);
+            if val.is_err() { return false; }
+            if val.unwrap().is_nil() { return false; }
+        }
+        return true;
+    }
+
+    false
 }
 
 fn interpolate_string(_lua: &Lua, format: &str, tokens: &mlua::Table) -> mlua::Result<String> {
@@ -286,6 +333,90 @@ mod tests {
             env.print('a={2}, b={3}, nome={name}', args) 
             "#,
             PathBuf::from("script.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn print_array() {
+        run_script(r#"
+            local args = {[1] = 1, [2] = 10, [3] = 20, name='Thiago'}
+            env.print(args)
+            "#,
+                   PathBuf::from("script.lua"), vec![]).unwrap();
+
+        run_script(r#"
+            local args = {[1] = 1, [2] = 10, [3] = 20}
+            env.print(args)
+            "#,
+                   PathBuf::from("script.lua"), vec![]).unwrap();
+
+        run_script(r#"
+            local args = {}
+            env.print(args)
+            "#,
+                   PathBuf::from("script.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_is_array_with_proper_array() {
+        let lua = Lua::new();
+        let table = lua.create_table().unwrap();
+        table.set(1, "a").unwrap();
+        table.set(2, "b").unwrap();
+        table.set(3, "c").unwrap();
+
+        let tokens = Variadic::from_iter([Value::Table(table)]);
+        assert!(is_array(&tokens));
+    }
+
+    #[test]
+    fn test_is_array_with_non_sequential_keys() {
+        let lua = Lua::new();
+        let table = lua.create_table().unwrap();
+        table.set(1, "a").unwrap();
+        table.set(3, "b").unwrap(); // skip index 2
+
+        let tokens = Variadic::from_iter([Value::Table(table)]);
+        assert!(!is_array(&tokens));
+    }
+
+    #[test]
+    fn test_is_array_with_string_key() {
+        let lua = Lua::new();
+        let table = lua.create_table().unwrap();
+        table.set(1, "a").unwrap();
+        table.set("key", "b").unwrap(); // string key
+
+        let tokens = Variadic::from_iter([Value::Table(table)]);
+        assert!(!is_array(&tokens));
+    }
+
+    #[test]
+    fn test_is_array_with_empty_table() {
+        let lua = Lua::new();
+        let table = lua.create_table().unwrap();
+
+        let tokens = Variadic::from_iter([Value::Table(table)]);
+        // By your logic, empty table should be an array (nothing contradicts sequence)
+        assert!(is_array(&tokens));
+    }
+
+    #[test]
+    fn test_is_array_with_wrong_argument_count() {
+        let lua = Lua::new();
+        let table1 = lua.create_table().unwrap();
+        let table2 = lua.create_table().unwrap();
+
+        let tokens = Variadic::from_iter([Value::Table(table1), Value::Table(table2)]);
+        assert!(!is_array(&tokens));
+
+        let empty: Variadic<Value> = Variadic::new();
+        assert!(!is_array(&empty));
+    }
+
+    #[test]
+    fn test_is_array_with_wrong_argument_type() {
+        let tokens = Variadic::from_iter([Value::String(Lua::new().create_string("not a table").unwrap())]);
+        assert!(!is_array(&tokens));
     }
 
 

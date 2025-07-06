@@ -8,6 +8,7 @@ use crate::modules::filesystem::*;
 use crate::modules::net::*;
 use crate::modules::os::*;
 use crate::modules::path::*;
+use crate::modules::string::split;
 use crate::modules::toml::load_file as load_toml;
 use crate::modules::toml::save_file as save_toml;
 use crate::modules::json::load_file as load_json;
@@ -82,6 +83,10 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     let path_tb = lua.create_table()?;
     path_tb.set("join", lua.create_function(path_join)?)?;
     lua.globals().set("path", path_tb)?;
+
+    let string_tb: mlua::Table = lua.globals().get("string")?;
+    string_tb.set("split", lua.create_function(split)?)?;
+    lua.globals().set("string", string_tb)?;
 
     Ok(())
 }

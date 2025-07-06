@@ -7,3 +7,4 @@ pub mod path;
 pub mod pipeline_exec;
 pub mod toml;
 pub mod json;
+pub mod string;
