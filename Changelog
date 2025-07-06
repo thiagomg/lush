@@ -1,3 +1,6 @@
+0.15.0
+- Added Syntax sugar for pipe_exec `$>` and pipeline `$()`
+
 0.14.0
 - Added multi line support to LuSH repl
 

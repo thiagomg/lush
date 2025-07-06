@@ -224,10 +224,10 @@ fn print_array(tokens: &Variadic<Value>) {
         return;
     }
 
-    let item = tokens.get(0).unwrap();
+    let item = tokens.first().unwrap();
     if let Value::Table(t) = item {
         let mut exp_idx = 1;
-        print!("{}", "{");
+        print!("{{");
         loop {
             let val = match t.get::<Value>(exp_idx) {
                 Ok(val) if val.is_nil() => break,
@@ -241,7 +241,7 @@ fn print_array(tokens: &Variadic<Value>) {
             }
             exp_idx += 1;
         }
-        println!("{}", "}");
+        println!("}}");
     }
 }
 

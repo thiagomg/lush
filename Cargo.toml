@@ -1,7 +1,7 @@
 [package]
 name = "lush"
 description = "LuSH is a lua for shell scripts - embedded in a single binary, easy to share, to run everywhere"
-version = "0.14.0"
+version = "0.15.0"
 edition = "2024"
 authors = ["Thiago Massari Guedes"]
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ os_pipe = "1.2"
 tar = "0.4.44"
 zstd = "0.13"
 walkdir = "2.5"
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking", "native-tls-vendored"] }
 url = "2"
 indicatif = "0.18"
 toml = "0.8.23"

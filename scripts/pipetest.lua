@@ -12,15 +12,20 @@ function only_errors(x)
     end
 end
 
-os.pipe_exec(
-    {"tail", "/tmp/my-file.log"},
-    {in_brackets},
-    {"grep", "error"}
-)
+$> tail /tmp/my-file.log | `in_brackets` | grep "error"
+-- os.pipe_exec(
+--     {"tail", "/tmp/my-file.log"},
+--     {in_brackets},
+--     {"grep", "error"}
+-- )
 
- x = os.pipeline(
-     {"cat", "/tmp/my-file.log"},
-     {in_brackets},
-     {only_errors}
- )
- print(x)
+local x = $(cat /tmp/my-file.log | `in_brackets` | grep "error")
+-- x = os.pipeline(
+--     {"cat", "/tmp/my-file.log"},
+--     {in_brackets},
+--     {only_errors}
+-- )
+print("content:" .. x)
+
+local lush_files = $(find . -name "*.lush")
+print("lush files: " .. lush_files)
