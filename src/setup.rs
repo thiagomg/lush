@@ -114,10 +114,10 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
     lua.load(&add_path).exec()?;
 
     // Before loading the script, let's run through pre-processors
-    let script = interpolate_strings(script);
     let script = replace_shell_exec(&script);
     let script = replace_sub_shell(&script);
-    
+    let script = interpolate_strings(&script);
+
     lua.load(script).set_name(script_file_name).exec()
 }
 
