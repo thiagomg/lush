@@ -1,3 +1,6 @@
+0.15.1
+- BUGFIX: String interpolation needs to be the last preprocessor
+
 0.15.0
 - Added Syntax sugar for pipe_exec `$>` and pipeline `$()`
 
