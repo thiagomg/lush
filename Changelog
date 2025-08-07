@@ -1,3 +1,6 @@
+0.16.0
+- Added functions toml.from_string and json.from_string
+
 0.15.1
 - BUGFIX: String interpolation needs to be the last preprocessor
 

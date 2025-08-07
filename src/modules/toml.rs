@@ -3,6 +3,10 @@ use mlua::Lua;
 
 pub(crate) fn load_file(lua: &Lua, path: String) -> mlua::Result<mlua::Value> {
     let content = fs::read_to_string(path).map_err(mlua::Error::external)?;
+    from_string(lua, content)
+}
+
+pub(crate) fn from_string(lua: &Lua, content: String) -> mlua::Result<mlua::Value> {
     let parsed: toml::Value = toml::from_str(&content).map_err(mlua::Error::external)?;
     convert_toml_to_lua(lua, parsed)
 }

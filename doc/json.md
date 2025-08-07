@@ -23,7 +23,7 @@ For the file /Users/myself/config.json
   "name": "Scarlett Johansson",
   "age": 38,
   "occupation": "Actress",
-  "hair_colour": { 
+  "hair_colour": {
     "blonde": true,
     "red": true
   }
@@ -37,6 +37,38 @@ env.print(s['hair_colour']["red"])
 s['hair_colour']["blue"] = false
 env.print(s['hair_colour']["blue"])
 json.save_file('/tmp/file.json', s)
+```
+
+---
+
+`json.from_string(content)`
+
+Loads a json from a string and returns it as a lua table
+
+Parameters:
+
+* content (string) - Content of the json.
+
+Returns:
+
+* Lua table with the content of the json file
+
+Example:
+
+```lua
+local cont = [[{
+  "name": "Scarlett Johansson",
+  "age": 38,
+  "occupation": "Actress",
+  "hair_colour": {
+    "blonde": true,
+    "red": true
+  }
+}]]
+
+local s = json.from_string(cont)
+env.print(s['hair_colour']["blonde"])
+env.print(s['hair_colour']["red"])
 ```
 
 ---

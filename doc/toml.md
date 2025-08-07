@@ -35,6 +35,38 @@ print(cfg["packages"]["sgrep"]["branch"])
 ```
 
 ---
+
+`toml.from_string(content)`
+
+Loads a toml from a string and returns it as a lua table
+
+Parameters:
+
+* content (string) - Content of the toml.
+
+Returns:
+
+* Lua table with the content of the toml file
+
+Example:
+
+```lua
+local cont = [[
+[packages.sgrep]
+branch = "main"
+path = "/Users/myself/my-project"
+
+[workspace]
+name = "martelo"
+version = "1"
+]]
+
+local cfg = toml.from_string(cont)
+print(cfg["packages"]["sgrep"]["branch"])
+-- prints main
+```
+
+---
 `toml.save_file(filename, content)`
 
 Saves a lua table as a toml file
@@ -57,4 +89,3 @@ Generates the file
 [packages.sgrep]
 branch = "main"
 ```
-

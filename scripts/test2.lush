@@ -34,9 +34,18 @@ json.save_file(file_name, {name = 'Scarlett Johansson', age = 38, occupation = '
 
 local json_cont = fs.read_file(file_name)
 env.print(json_cont)
+local json_data = json.from_string(json_cont)
+env.print("------------")
+env.print(json_data)
 
 local json_cont = fs.write_file(dir_name .. '/test2.json', "test content")
 env.print(json_cont)
 print(fs.read_file(dir_name .. '/test2.json'))
 print(fs.read_file(dir_name .. '/test3.json'))
 
+env.print("------------")
+toml.save_file(file_name, {name = 'Scarlett Johansson', age = 38, occupation = 'Actress'})
+local toml_cont = fs.read_file(file_name)
+env.print(toml_cont)
+local toml_parsed = toml.from_string(toml_cont)
+env.print(toml_parsed)

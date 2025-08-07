@@ -10,8 +10,10 @@ use crate::modules::os::*;
 use crate::modules::path::*;
 use crate::modules::string::split;
 use crate::modules::toml::load_file as load_toml;
+use crate::modules::toml::from_string as from_string_toml;
 use crate::modules::toml::save_file as save_toml;
 use crate::modules::json::load_file as load_json;
+use crate::modules::json::from_string as from_string_json;
 use crate::modules::json::save_file as save_json;
 use crate::preprocessor::{interpolate_strings, replace_shell_exec, replace_sub_shell};
 
@@ -72,11 +74,13 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
 
     let toml_tb = lua.create_table()?;
     toml_tb.set("load_file", lua.create_function(load_toml)?)?;
+    toml_tb.set("from_string", lua.create_function(from_string_toml)?)?;
     toml_tb.set("save_file", lua.create_function(save_toml)?)?;
     lua.globals().set("toml", toml_tb)?;
 
     let json_tb = lua.create_table()?;
     json_tb.set("load_file", lua.create_function(load_json)?)?;
+    json_tb.set("from_string", lua.create_function(from_string_json)?)?;
     json_tb.set("save_file", lua.create_function(save_json)?)?;
     lua.globals().set("json", json_tb)?;
 
@@ -123,8 +127,10 @@ pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -
 
 #[cfg(test)]
 mod tests {
-    use crate::test::data::DATA;
     use super::*;
+    use crate::test::data::DATA;
+    use std::fs;
+    use tempfile::TempDir;
 
     #[test]
     fn run_test_script() {
@@ -147,6 +153,327 @@ mod tests {
         let ts = res.to_string();
         println!("{}", ts);
     }
-    
-    
+
+    #[test]
+    fn test_toml_from_string() {
+        let script = r#"
+        local toml_str = [[
+[server]
+host = "localhost"
+port = 8080
+enabled = true
+
+[database]
+name = "mydb"
+timeout = 30
+        ]]
+
+        local data = toml.from_string(toml_str)
+        assert(data.server.host == "localhost")
+        assert(data.server.port == 8080)
+        assert(data.server.enabled == true)
+        assert(data.database.name == "mydb")
+        assert(data.database.timeout == 30)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_toml_from_string_invalid() {
+        let script = r#"
+        local invalid_toml = "invalid toml content ["
+        local success, err = pcall(function()
+            toml.from_string(invalid_toml)
+        end)
+        assert(not success)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_toml_load_and_save_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let toml_file = temp_dir.path().join("test.toml");
+
+        // Create initial TOML file
+        let toml_content = r#"
+[app]
+name = "test_app"
+version = "1.0.0"
+debug = false
+
+[features]
+logging = true
+metrics = false
+        "#;
+        fs::write(&toml_file, toml_content).unwrap();
+
+        let script = format!(r#"
+        -- Load the TOML file
+        local data = toml.load_file("{}")
+        assert(data.app.name == "test_app")
+        assert(data.app.version == "1.0.0")
+        assert(data.app.debug == false)
+        assert(data.features.logging == true)
+        assert(data.features.metrics == false)
+
+        -- Modify the data
+        data.app.version = "2.0.0"
+        data.app.debug = true
+        data.features.new_feature = "added"
+
+        -- Save it back
+        toml.save_file("{}", data)
+
+        -- Load again to verify changes
+        local updated_data = toml.load_file("{}")
+        assert(updated_data.app.version == "2.0.0")
+        assert(updated_data.app.debug == true)
+        assert(updated_data.features.new_feature == "added")
+        "#,
+        toml_file.display(),
+        toml_file.display(),
+        toml_file.display());
+
+        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_toml_load_file_nonexistent() {
+        let script = r#"
+        local success, err = pcall(function()
+            toml.load_file("/nonexistent/file.toml")
+        end)
+        assert(not success)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_from_string() {
+        let script = r#"
+        local json_str = [[{
+            "name": "John Doe",
+            "age": 30,
+            "active": true,
+            "balance": 123.45,
+            "address": {
+                "street": "123 Main St",
+                "city": "Anytown"
+            },
+            "hobbies": ["reading", "swimming", "coding"]
+        }]]
+
+        local data = json.from_string(json_str)
+        assert(data.name == "John Doe")
+        assert(data.age == 30)
+        assert(data.active == true)
+        assert(data.balance == 123.45)
+        assert(data.address.street == "123 Main St")
+        assert(data.address.city == "Anytown")
+        assert(#data.hobbies == 3)
+        assert(data.hobbies[1] == "reading")
+        assert(data.hobbies[2] == "swimming")
+        assert(data.hobbies[3] == "coding")
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_from_string_invalid() {
+        let script = r#"
+        local invalid_json = '{"invalid": json content'
+        local success, err = pcall(function()
+            json.from_string(invalid_json)
+        end)
+        assert(not success)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_load_and_save_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let json_file = temp_dir.path().join("test.json");
+
+        // Create initial JSON file
+        let json_content = r#"{
+            "config": {
+                "host": "example.com",
+                "port": 3000,
+                "ssl": true
+            },
+            "users": ["alice", "bob", "charlie"],
+            "settings": {
+                "theme": "dark",
+                "notifications": false
+            }
+        }"#;
+        fs::write(&json_file, json_content).unwrap();
+
+        let script = format!(r#"
+        -- Load the JSON file
+        local data = json.load_file("{}")
+        assert(data.config.host == "example.com")
+        assert(data.config.port == 3000)
+        assert(data.config.ssl == true)
+        assert(#data.users == 3)
+        assert(data.users[1] == "alice")
+        assert(data.settings.theme == "dark")
+        assert(data.settings.notifications == false)
+
+        -- Modify the data
+        data.config.port = 4000
+        data.config.ssl = false
+        data.users[4] = "david"
+        data.settings.new_setting = "value"
+
+        -- Save it back
+        json.save_file("{}", data)
+
+        -- Load again to verify changes
+        local updated_data = json.load_file("{}")
+        assert(updated_data.config.port == 4000)
+        assert(updated_data.config.ssl == false)
+        assert(#updated_data.users == 4)
+        assert(updated_data.users[4] == "david")
+        assert(updated_data.settings.new_setting == "value")
+        "#,
+        json_file.display(),
+        json_file.display(),
+        json_file.display());
+
+        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_load_file_nonexistent() {
+        let script = r#"
+        local success, err = pcall(function()
+            json.load_file("/nonexistent/file.json")
+        end)
+        assert(not success)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_array_handling() {
+        let script = r#"
+        local json_array = '[1, 2, 3, "hello", true, null]'
+        local data = json.from_string(json_array)
+        -- 5 as nil will change the result of array size
+        assert(#data == 5)
+        assert(data[1] == 1)
+        assert(data[2] == 2)
+        assert(data[3] == 3)
+        assert(data[4] == "hello")
+        assert(data[5] == true)
+        assert(data[6] == nil) -- JSON null becomes Lua nil
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_json_nested_objects() {
+        let script = r#"
+        local nested_json = [[{
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "value": "deep_value",
+                        "number": 42
+                    }
+                }
+            }
+        }]]
+
+        local data = json.from_string(nested_json)
+        assert(data.level1.level2.level3.value == "deep_value")
+        assert(data.level1.level2.level3.number == 42)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_toml_array_handling() {
+        let script = r#"
+        local toml_str = [=[
+numbers = [1, 2, 3]
+strings = ["a", "b", "c"]
+mixed = [1, "two", true]
+
+[[items]]
+name = "first"
+value = 10
+
+[[items]]
+name = "second"
+value = 20
+]=]
+
+        local data = toml.from_string(toml_str)
+        assert(#data.numbers == 3)
+        assert(data.numbers[1] == 1)
+        assert(#data.strings == 3)
+        assert(data.strings[1] == "a")
+        assert(data.mixed[3] == true)
+        assert(#data.items == 2)
+        assert(data.items[1].name == "first")
+        assert(data.items[2].value == 20)
+        "#;
+
+        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
+
+    #[test]
+    fn test_roundtrip_data_integrity() {
+        let temp_dir = TempDir::new().unwrap();
+        let toml_file = temp_dir.path().join("roundtrip.toml");
+        let json_file = temp_dir.path().join("roundtrip.json");
+
+        let script = format!(r#"
+        -- Create test data
+        local test_data = {{
+            string_val = "hello world",
+            number_val = 123,
+            float_val = 45.67,
+            bool_val = true,
+            nested = {{
+                inner_string = "nested value",
+                inner_number = 999
+            }}
+        }}
+
+        -- Test TOML roundtrip
+        toml.save_file("{}", test_data)
+        local toml_loaded = toml.load_file("{}")
+        assert(toml_loaded.string_val == test_data.string_val)
+        assert(toml_loaded.number_val == test_data.number_val)
+        assert(toml_loaded.bool_val == test_data.bool_val)
+        assert(toml_loaded.nested.inner_string == test_data.nested.inner_string)
+
+        -- Test JSON roundtrip
+        json.save_file("{}", test_data)
+        local json_loaded = json.load_file("{}")
+        assert(json_loaded.string_val == test_data.string_val)
+        assert(json_loaded.number_val == test_data.number_val)
+        assert(json_loaded.bool_val == test_data.bool_val)
+        assert(json_loaded.nested.inner_string == test_data.nested.inner_string)
+        "#,
+        toml_file.display(),
+        toml_file.display(),
+        json_file.display(),
+        json_file.display());
+
+        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+    }
 }
