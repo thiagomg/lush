@@ -10,6 +10,16 @@ pub(crate) fn split(_lua: &Lua, (buf, patt, keep_empty): (String, String, Option
     Ok(items)
 }
 
+pub(crate) fn startswith(_lua: &Lua, (buf, patt): (String, String)) -> mlua::Result<bool> {
+    let res = buf.starts_with(&patt);
+    Ok(res)
+}
+
+pub(crate) fn endswith(_lua: &Lua, (buf, patt): (String, String)) -> mlua::Result<bool> {
+    let res = buf.ends_with(&patt);
+    Ok(res)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,5 +101,41 @@ mod tests {
         // When keep_empty is None, default is true
         let res = split(&lua, ("a,,b".to_string(), sep.clone(), None)).unwrap();
         assert_eq!(res, vec!["a", "", "b"]);
+    }
+
+    #[test]
+    fn test_startswith() {
+        let lua = Lua::new();
+
+        // Positive cases
+        assert_eq!(startswith(&lua, ("hello world".to_string(), "hello".to_string())).unwrap(), true);
+        assert_eq!(startswith(&lua, ("rustacean".to_string(), "rust".to_string())).unwrap(), true);
+
+        // Negative cases
+        assert_eq!(startswith(&lua, ("hello world".to_string(), "world".to_string())).unwrap(), false);
+        assert_eq!(startswith(&lua, ("abc".to_string(), "abcd".to_string())).unwrap(), false);
+
+        // Edge cases
+        assert_eq!(startswith(&lua, ("".to_string(), "".to_string())).unwrap(), true);
+        assert_eq!(startswith(&lua, ("hello".to_string(), "".to_string())).unwrap(), true);
+        assert_eq!(startswith(&lua, ("".to_string(), "hello".to_string())).unwrap(), false);
+    }
+
+    #[test]
+    fn test_endswith() {
+        let lua = Lua::new();
+
+        // Positive cases
+        assert_eq!(endswith(&lua, ("hello world".to_string(), "world".to_string())).unwrap(), true);
+        assert_eq!(endswith(&lua, ("rustacean".to_string(), "cean".to_string())).unwrap(), true);
+
+        // Negative cases
+        assert_eq!(endswith(&lua, ("hello world".to_string(), "hello".to_string())).unwrap(), false);
+        assert_eq!(endswith(&lua, ("abc".to_string(), "z".to_string())).unwrap(), false);
+
+        // Edge cases
+        assert_eq!(endswith(&lua, ("".to_string(), "".to_string())).unwrap(), true);
+        assert_eq!(endswith(&lua, ("hello".to_string(), "".to_string())).unwrap(), true);
+        assert_eq!(endswith(&lua, ("".to_string(), "hello".to_string())).unwrap(), false);
     }
 }

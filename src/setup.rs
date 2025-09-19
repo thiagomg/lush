@@ -8,7 +8,7 @@ use crate::modules::filesystem::*;
 use crate::modules::net::*;
 use crate::modules::os::*;
 use crate::modules::path::*;
-use crate::modules::string::split;
+use crate::modules::string::{endswith, split, startswith};
 use crate::modules::toml::load_file as load_toml;
 use crate::modules::toml::from_string as from_string_toml;
 use crate::modules::toml::save_file as save_toml;
@@ -90,6 +90,8 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
 
     let string_tb: mlua::Table = lua.globals().get("string")?;
     string_tb.set("split", lua.create_function(split)?)?;
+    string_tb.set("startswith", lua.create_function(startswith)?)?;
+    string_tb.set("endswith", lua.create_function(endswith)?)?;
     lua.globals().set("string", string_tb)?;
 
     Ok(())

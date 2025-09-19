@@ -27,3 +27,44 @@ string.split("a,,c", ",", false)
 ```
 
 ---
+---
+
+`string.startswith(text, part)`
+
+Returns:
+
+* true if text starts with part
+
+Example:
+
+```lua
+string.startswith("Palmeiras", "Palm")
+-- Returns true
+team = "Palmeiras"
+team:startswith("Palm")
+-- Returns true
+team:startswith("alm")
+-- Returns false
+```
+
+---
+
+`string.startswith(text, part)`
+
+Returns:
+
+* true if text starts with part
+
+Example:
+
+```lua
+string.endswith("Palmeiras", "eiras")
+-- Returns true
+team = "Palmeiras"
+team:endswith("eiras")
+-- Returns true
+team:endswith("Palm")
+-- Returns false
+```
+
+---

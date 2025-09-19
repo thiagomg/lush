@@ -1,3 +1,6 @@
+0.17.0
+- Functions string.startswith and string.endswith added
+
 0.16.0
 - Added functions toml.from_string and json.from_string
 
