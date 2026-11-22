@@ -323,7 +323,7 @@ mod tests {
             local args = {10, 20, name='Thiago'}
             env.print('a={}, b={}, nome={name}', args) 
             "#, 
-            PathBuf::from("script.lua"), vec![]).unwrap();
+            PathBuf::from("script.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -332,7 +332,7 @@ mod tests {
             local args = {[1] = 1, [2] = 10, [3] = 20, name='Thiago'}
             env.print('a={2}, b={3}, nome={name}', args) 
             "#,
-            PathBuf::from("script.lua"), vec![]).unwrap();
+            PathBuf::from("script.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -341,19 +341,19 @@ mod tests {
             local args = {[1] = 1, [2] = 10, [3] = 20, name='Thiago'}
             env.print(args)
             "#,
-                   PathBuf::from("script.lua"), vec![]).unwrap();
+                   PathBuf::from("script.lua"), vec![], false).unwrap();
 
         run_script(r#"
             local args = {[1] = 1, [2] = 10, [3] = 20}
             env.print(args)
             "#,
-                   PathBuf::from("script.lua"), vec![]).unwrap();
+                   PathBuf::from("script.lua"), vec![], false).unwrap();
 
         run_script(r#"
             local args = {}
             env.print(args)
             "#,
-                   PathBuf::from("script.lua"), vec![]).unwrap();
+                   PathBuf::from("script.lua"), vec![], false).unwrap();
     }
 
     #[test]

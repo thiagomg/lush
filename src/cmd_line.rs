@@ -9,4 +9,8 @@ pub struct Args {
 
     /// Arguments to be passed to the script
     pub script_args: Vec<String>,
+
+    /// Enable Lua unsafe mode
+    #[arg(long = "unsafe")]
+    pub unsafe_mode: bool,
 }

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use mlua::Lua;
+use mlua::StdLib;
 use mlua::prelude::LuaResult;
 use crate::modules::pipeline_exec::*;
 use crate::modules::files::*;
@@ -97,8 +98,12 @@ pub(crate) fn set_utils(lua: &Lua) -> LuaResult<()> {
     Ok(())
 }
 
-pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>) -> LuaResult<()> {
-    let lua = Lua::new();
+pub(crate) fn run_script(script: &str, input_file: PathBuf, args: Vec<String>, unsafe_mode: bool) -> LuaResult<()> {
+    let lua = if unsafe_mode {
+        unsafe { Lua::unsafe_new_with(StdLib::ALL, mlua::LuaOptions::default()) }
+    } else {
+        Lua::new()
+    };
     let ctx = LushContext {
         dir_stack: vec![],
     };
@@ -136,12 +141,12 @@ mod tests {
 
     #[test]
     fn run_test_script() {
-        run_script(DATA, PathBuf::from("script.lua"), vec![]).unwrap();
+        run_script(DATA, PathBuf::from("script.lua"), vec![], false).unwrap();
     }
 
     #[test]
     fn run_builtin_os() {
-        run_script("os.execute('ls')", PathBuf::from("script.lua"), vec![]).unwrap();
+        run_script("os.execute('ls')", PathBuf::from("script.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -150,7 +155,7 @@ mod tests {
 
         env.invalid_func(1)
         "##;
-        let res = run_script(data, PathBuf::from("script.lua"), vec![]).unwrap_err();
+        let res = run_script(data, PathBuf::from("script.lua"), vec![], false).unwrap_err();
 
         let ts = res.to_string();
         println!("{}", ts);
@@ -178,7 +183,7 @@ timeout = 30
         assert(data.database.timeout == 30)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -191,7 +196,7 @@ timeout = 30
         assert(not success)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -239,7 +244,7 @@ metrics = false
         toml_file.display(),
         toml_file.display());
 
-        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(&script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -251,7 +256,7 @@ metrics = false
         assert(not success)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -282,7 +287,7 @@ metrics = false
         assert(data.hobbies[3] == "coding")
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -295,7 +300,7 @@ metrics = false
         assert(not success)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -350,7 +355,7 @@ metrics = false
         json_file.display(),
         json_file.display());
 
-        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(&script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -362,7 +367,7 @@ metrics = false
         assert(not success)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -380,7 +385,7 @@ metrics = false
         assert(data[6] == nil) -- JSON null becomes Lua nil
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -402,7 +407,7 @@ metrics = false
         assert(data.level1.level2.level3.number == 42)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -433,7 +438,7 @@ value = 20
         assert(data.items[2].value == 20)
         "#;
 
-        run_script(script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 
     #[test]
@@ -476,6 +481,6 @@ value = 20
         json_file.display(),
         json_file.display());
 
-        run_script(&script, PathBuf::from("test.lua"), vec![]).unwrap();
+        run_script(&script, PathBuf::from("test.lua"), vec![], false).unwrap();
     }
 }
