@@ -35,8 +35,11 @@ fn main() {
     }
 
     let args = Args::parse();
+    if args.unsafe_mode {
+        eprintln!("WARNING: unsafe mode enabled — FFI is active");
+    }
     let input_file = args.lua_file;
-    match run_file(input_file, args.script_args) {
+    match run_file(input_file, args.script_args, args.unsafe_mode) {
         Ok(()) => std::process::exit(0),
         Err(error) => {
             println!("{}", error.to_string().red());
@@ -45,11 +48,11 @@ fn main() {
     }
 }
 
-fn run_file(input_file: PathBuf, args: Vec<String>) -> Result<(), String> {
+fn run_file(input_file: PathBuf, args: Vec<String>, unsafe_mode: bool) -> Result<(), String> {
     let script = fs::read_to_string(input_file.clone())
         .unwrap_or_else(|_| panic!("Error opening input file {}", input_file.display()));
     let script = remove_shebang(script);
-    let res = run_script(&script, input_file.clone(), args).map_err(|error| error.to_string());
+    let res = run_script(&script, input_file.clone(), args, unsafe_mode).map_err(|error| error.to_string());
 
     let paths = TEMP_PATHS.lock().unwrap();
     for path in paths.iter() {
@@ -69,7 +72,7 @@ mod tests {
 
     #[test]
     fn run_test_file() {
-        let res = run_file(PathBuf::from("scripts/test.lua"), vec![]);
+        let res = run_file(PathBuf::from("scripts/test.lua"), vec![], false);
         println!("{:?}", res);
         match res {
             Ok(()) => println!("ok"),
@@ -81,13 +84,13 @@ mod tests {
 
     #[test]
     fn test_run_pipeline() {
-        let res = run_file(PathBuf::from("scripts/pipetest.lua"), vec![]);
+        let res = run_file(PathBuf::from("scripts/pipetest.lua"), vec![], false);
         assert!(res.is_ok());
     }
 
     #[test]
     fn test_run_2() {
-        let res = run_file(PathBuf::from("scripts/test2.lush"), vec![]);
+        let res = run_file(PathBuf::from("scripts/test2.lush"), vec![], false);
         assert!(res.is_ok());
     }
 }
